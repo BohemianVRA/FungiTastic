@@ -1,7 +1,7 @@
 theme: jekyll-theme-minimal
 logo: /assets/img/FungiTastic.png
-title: The FungiTastic dataset
-description: Dataset for fungi classification from images and metadata
+title: The FungiTastic Dataset
+description: Dataset for Fungi Classification from Images and Metadata
 show_downloads: true
 github:
   zip_url: https://cmp.felk.cvut.cz/~sulcmila/FungiTastic.zip

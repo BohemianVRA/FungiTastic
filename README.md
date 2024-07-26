@@ -1,3 +1,7 @@
+![Species Similarities and differences](assets/img/banner.png)
+
+
+
 # Dataset
 FungiTastic is a machine learning dataset for classification of fungi from images and metadata.
 

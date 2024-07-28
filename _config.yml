@@ -3,6 +3,8 @@ logo: /assets/img/FungiTastic.png
 title: The FungiTastic Dataset
 description: Dataset for Fungi Classification from Images and Metadata
 show_downloads: true
+show_download_zip: false
 github:
   zip_url: https://cmp.felk.cvut.cz/~sulcmila/FungiTastic.zip
+  kaggle_url: https://www.kaggle.com/datasets/picekl/fungitastic
 

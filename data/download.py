@@ -66,7 +66,6 @@ def download(subset: str, size: str, data_root: str, rewrite: bool = False, keep
         keep_zip (bool, optional): Keep the downloaded zip files. Defaults to False.
         no_extraction (bool, optional): Do not extract the downloaded zip files. Defaults to False.
     """
-    validate_args(subset, size, data_root)
     fungi_path = os.path.join(data_root, 'FungiTastic')
     Path(fungi_path).mkdir(parents=False, exist_ok=True)
 

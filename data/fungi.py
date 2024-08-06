@@ -78,7 +78,7 @@ class FungiTastic(ImageDataset):
         self.split = split
         self.task = task
 
-        if 'test' not in split:
+        if split in ['train', 'val']:
             assert "category_id" in df
             class_id2label = df.groupby('category_id')['species'].unique().to_dict()
             unknown_species = list(class_id2label.get(-1, []))
@@ -111,7 +111,7 @@ class FungiTastic(ImageDataset):
         Returns:
             Tuple[torch.Tensor, Optional[int], str]: Image tensor, class ID, and file path.
         """
-        if 'test' not in self.split:
+        if self.split in ['train', 'val']:
             return super().__getitem__(idx)
         else:
             image, file_path = self.get_image(idx)

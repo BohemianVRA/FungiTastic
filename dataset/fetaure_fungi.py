@@ -56,30 +56,6 @@ class FeatureFungiDataset(FungiTastic):
         else:
             return emb, class_id, file_path
 
-
-def get_few_shot_feature_fungi(
-        data_path='/mnt/datagrid/plants/DanishFungiDataset/DanishFungi24/',
-        split='val',
-        feature_path='/mnt/datagrid/personal/janoukl1/out/DF24/features',
-        model='dinov2',
-        transform=None
-):
-    meta_folder = os.path.join(data_path, 'resources')
-
-    df_path = os.path.join(meta_folder, f"DanishFungi2024-FewShot-no-micro-{split}-metadata-DEV.csv")
-    df = pd.read_csv(df_path)
-    df["image_path"] = df.image_path.apply(
-        # joint data_path and path, replace 'DF20' (which is the first component of path) with 'DF20M'
-        lambda x: os.path.join(data_path, x)
-    )
-
-    features_file = os.path.join(feature_path, model, f"224x224_no_micro_{split}.h5")
-
-    dataset = FeatureFungiDataset(df, name=f'Few-Shot {split}', features_file=features_file, transform=transform)
-
-    return dataset
-
-
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     # Use LaTeX-like font for paper visualization if needed and LaTeX is installed

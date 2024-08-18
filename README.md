@@ -1,7 +1,7 @@
 # Dataset
 FungiTastic is a machine learning dataset for classification of fungi from images and metadata.
 
-> **Disclaimer:** We are currently working on consolidating the code in different branches.
+> **Disclaimer:** We are currently working on consolidating the code in different branches. 
 
 ### Branch overview:
 
@@ -22,6 +22,8 @@ FungiTastic is a machine learning dataset for classification of fungi from image
 - **feat/custom_metrics**
   - Contains evaluation metrics
 
+## Installation
+[Installation instructions will be here]
 
 ## Statistics
 [Plots will appear here]

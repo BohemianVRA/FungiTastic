@@ -1,26 +1,26 @@
-"""
-Foreground/background extraction using SAM
-"""
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
+import yaml
 from PIL import Image
 import os
-from scipy.special import softmax as np_softmax
 from tqdm import tqdm
 
-import torchvision.transforms.v2 as tfms
+from dataset.fungi import FungiTastic
+from mask_generator import LangSAMMaskGenerator
+
 import pandas as pd
-from scripts.baselines.seg.lang_sam import LangSAM
-
-def get_dataframe(data):
-    df = pd.DataFrame(data)
-    return df
 
 
-def generate_masks_langsam(mask_gen, dataset, dataframes_dir=None, vis=False):
+def im2mask_path(im_path, mask_dir, img_dir):
+    path_wo_img_dir = os.path.relpath(im_path, img_dir)
+    mask_path = os.path.join(mask_dir, path_wo_img_dir)
+    return mask_path
+
+
+def generate_masks(mask_gen, dataset, mask_dir, dataframes_dir=None, vis=False):
     """
     Mask generation using LangSAM: https://github.com/luca-medeiros/lang-segment-anything
     Requires having groundingdino installed: https://github.com/IDEA-Research/GroundingDINO
@@ -34,6 +34,8 @@ def generate_masks_langsam(mask_gen, dataset, dataframes_dir=None, vis=False):
     assert hasattr(dataset, 'im2mask_path'), "Dataset must have a method im2mask_path(self, im_path) -> mask_path"
     assert 'image_path' in dataset[0][2], "meta['image_path'] must exist in the dataset"
 
+    img_dir = dataset[0][2]['image_path']
+
     df_data = []
 
     Path(dataset.mask_dir).mkdir(parents=True, exist_ok=True)
@@ -41,7 +43,7 @@ def generate_masks_langsam(mask_gen, dataset, dataframes_dir=None, vis=False):
     for i in tqdm(range(len(dataset))):
         img_pil, label, meta = dataset[i]
         img_path = meta['image_path']
-        mask_path = dataset.im2mask_path(img_path)
+        mask_path = im2mask_path(img_path, mask_dir, img_dir)
 
         # make sure img_pil is actually a PIL image
         if not isinstance(img_pil, Image.Image):
@@ -75,104 +77,50 @@ def generate_masks_langsam(mask_gen, dataset, dataframes_dir=None, vis=False):
             print(e)
             print(f"Error with image {img_path}")
             # save empty mask, add error to extra
-            mask = Image.fromarray(np.zeros_like(np.array(img)))
+            mask = Image.fromarray(np.zeros_like(np.array(img_pil)))
             mask.save(mask_path)
             extra = {'error': str(e)}
         extra['image_path'] = img_path
         df_data.append(extra)
 
     if dataframes_dir is not None:
-        df = get_dataframe(df_data)
+        df = pd.DataFrame(df_data)
         df.to_hdf(os.path.join(dataframes_dir, f'masks_info.h5'), key='df', mode='w')
 
 
-def generate_masks_sam(mask_gen, dataset):
-    # TODO unify with langsam!!!
-    # crate path for mask including parents if it does not exist
-    Path(dataset.mask_dir).mkdir(parents=True, exist_ok=True)
-
-    idxs = np.arange(len(dataset))
-    for idx in tqdm(idxs):
-        im, label, meta = dataset[idx]
-
-        mask_path = dataset.im2mask_path(meta['image_path'])
-        # if mask exists, skip
-        if os.path.exists(mask_path):
-            continue
-
-        # convert im from torch [c, h, w] to numpy array [h, w, c]
-        im = (im.permute(1, 2, 0).numpy() * 255).astype(np.uint8)
-
-        mask = mask_gen.predict_batch([im])
-
-        # PIL saves images with lossless compression so good enough for us -
-        # multiply by 255 for easier visual inspection
-        mask = Image.fromarray(mask * 255)
-        mask.save(mask_path)
-
-
 def get_mask_generator(cfg):
-    if cfg.mask_gen.model == 'sam':
-        return SAMMaskGenerator(
-            ckpt_path=cfg.path.ckpt,
-            method=cfg.mask_gen.method,
-        )
-    elif cfg.mask_gen.model == 'lang_sam':
-        if cfg.mask_gen.method == 'metaclass':
-            text_prompt = f'{cfg.data.metaclasses[0]}'
-        else:
-            text_prompt = f'{cfg.mask_gen.text_prompt}'
-        return LangSAMMaskGenerator(
-            ckpt_path=cfg.path.ckpt,
-            text_prompt=text_prompt,
-            dataframes_dir=cfg.mask_gen.dataframes_dir,
-            method=cfg.mask_gen.method,
-        )
-    else:
-        raise ValueError(f"Unknown mask generator {cfg.mask_gen.model}")
+    text_prompt = 'mushroom'
+    return LangSAMMaskGenerator(
+        ckpt_path=cfg.ckpt_path,
+        text_prompt=text_prompt,
+        dataframes_dir=cfg.mask_gen.dataframes_dir,
+    )
 
 
-@hydra.main(config_path="conf", config_name=get_config(mode='generate_masks'))
-def main(cfg):
-    splits = [cfg.mask_gen.split] if cfg.mask_gen.split != 'all' else ['val', 'test', 'train']
+def main():
+    with open('../../../config/path.yaml', "r") as f:
+        cfg = yaml.safe_load(f)
+    cfg = SimpleNamespace(**cfg)
 
-    mask_gen = get_mask_generator(cfg)
-
-    generate_masks = generate_masks_sam if cfg.mask_gen.model == 'SAM' else generate_masks_langsam
-
-    cfg.data.mask_subdir = mask_gen.name
-
-    for split in splits:
-
-        dataset = get_datasets(cfg, splits=[split])
-
-        generate_masks(
-            mask_gen=mask_gen,
-            dataset=dataset[split],
-        )
-
-
-def test_generate_masks_langsam():
-    cfg = get_mock_config('fungitastic', root='.', mode='generate_masks')
     split = 'val'
 
     mask_gen = get_mask_generator(cfg)
 
-    generate_masks = generate_masks_sam if cfg.mask_gen.model == 'SAM' else generate_masks_langsam
-
-    cfg.data.mask_subdir = mask_gen.name
-
-    datasets = get_datasets(cfg, splits=[split], check_mask_dir=False)
-
-    dataframes_dir = datasets[split].mask_dir
+    dataset = FungiTastic(
+        root=cfg.data_path,
+        split=split,
+        size='300',
+        task='closed',
+        data_subset='FewShot',
+        transform=None,
+    )
 
     generate_masks(
         mask_gen=mask_gen,
-        dataset=datasets[split],
-        dataframes_dir=dataframes_dir,
+        dataset=dataset,
+        mask_dir='TODO'
     )
 
 
 if __name__ == '__main__':
-    # test_generate_masks_langsam()
     main()

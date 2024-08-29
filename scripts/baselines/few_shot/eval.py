@@ -108,11 +108,6 @@ def main():
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
-    # set wandb to offline mode
-    os.environ['WANDB_MODE'] = 'offline'
-    run = wandb.init(config=cfg, project='DF24', entity='klara', name=cfg.exp_name)
-
-    cfg = wandb.config
     # convert to SimpleNamespace for easier access
     cfg = SimpleNamespace(**dict(cfg))
 
@@ -120,4 +115,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    visualize()

@@ -21,12 +21,12 @@ class MaskGenerator():
 
 
 class LangSAMMaskGenerator(MaskGenerator):
-    def __init__(self, ckpt_path: str, text_prompt: str, dataframes_dir: str, method: str):
+    def __init__(self, ckpt_path: str, text_prompt: str, dataframes_dir: str):
         sam_ckpt_h = os.path.join(ckpt_path, 'sam_vit_h_4b8939.pth')
         self.langsam_predictor = LangSAM(ckpt_path=sam_ckpt_h)
         self.text_prompt = text_prompt
         self.dataframes_dir = dataframes_dir
-        self.name = f"lang_sam_{method}"
+        self.name = f"lang_sam"
 
     def predict(self, image_pil):
         # there may be multiple masks if grounding dino returns multiple boxes
@@ -42,10 +42,9 @@ class LangSAMMaskGenerator(MaskGenerator):
         else:
             mask = masks[0].cpu().numpy()
 
-        binary_mask = (mask > 0.5).astype(np.uint8)
         extra = {
             "confs_gdino": gdino_confs,
             "confs_seg": seg_confs,
             "n_inst": len(masks),
         }
-        return binary_mask, extra
+        return mask, extra

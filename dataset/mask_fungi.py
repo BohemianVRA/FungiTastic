@@ -26,11 +26,11 @@ class MaskFungiTastic(FungiTastic):
             **kwargs
         )
         # load mask_test.csv
-        gt_masks = pd.read_csv(os.path.join(root, 'masks_test2.csv'))
-        # gt_masks = pd.read_parquet(os.path.join(root, 'mask_test.parquet'))
+        # gt_masks = pd.read_csv(os.path.join(root, 'masks_test2.csv'))
+        gt_masks = pd.read_parquet(os.path.join(root, 'validation_masks_v0.1.parquet'))
 
         gt_masks.rename(columns={'file_name': 'filename'}, inplace=True)
-        gt_masks['rle'] = gt_masks['rle'].apply(ast.literal_eval)
+        # gt_masks['rle'] = gt_masks['rle'].apply(ast.literal_eval)
         self.df = self.df.merge(gt_masks, on='filename', how='inner')
 
 

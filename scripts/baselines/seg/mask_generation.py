@@ -48,13 +48,7 @@ def generate_masks(mask_gen, dataset, mask_dir, dataframes_dir=None, vis=False):
         # make sure img_pil is actually a PIL image
         if not isinstance(img_pil, Image.Image):
             img_pil = Image.fromarray(img_pil)
-
-        # TODO add config param to overwrite existing masks
-        if os.path.exists(mask_path):
-            continue
-
         try:
-            # TODO rewrite to batch version
             mask, extra = mask_gen.predict(img_pil)
 
             mask = Image.fromarray(mask * 255)

@@ -3,206 +3,215 @@ import subprocess
 import zipfile
 from pathlib import Path
 
-SUBSETS = ["full", "fs", "m", "dna"]
-SIZES = ["300", "500", "720p", "fullsize"]
 
-SUBSET2STR = {"fs": "FewShot", "m": "Mini", "dna": "DNA"}
+class FungiTasticDownloader:
+    SUBSETS = ["full", "fs", "m"]
+    SIZES = ["300", "500", "720p", "fullsize"]
+    SUBSET2STR = {"fs": "FewShot", "m": "Mini"}
+    HAS_DNA = {
+        'full': True,
+        'fs': False,
+        'm': True,
+    }
+    DOWNLOAD_ROOT = "https://cmp.felk.cvut.cz/datagrid/FungiTastic/shared/download"
 
-DOWNLOAD_ROOT = (
-    "https://cmp.felk.cvut.cz/datagrid/personal/janoukl1/shared_ext/FungiTastic/"
-)
+    def __init__(
+            self,
+            save_path: Path,
+            rewrite: bool = False,
+            keep_zip: bool = False,
+            no_extraction: bool = False,
+            metadata: bool = False,
+            images: bool = False,
+            satellite: bool = False,
+            climatic: bool = False,
+            masks: bool = False,
+    ):
+        self.save_path = save_path
+        self.rewrite = rewrite
+        self.keep_zip = keep_zip
+        self.no_extraction = no_extraction
+        self.metadata = metadata
+        self.images = images
+        self.satellite = satellite
+        self.climatic = climatic
+        self.masks = masks
 
+        self.fungi_path = self.save_path / "FungiTastic"
+        self.fungi_path.mkdir(parents=True, exist_ok=True)
 
-def download_file(url: str, target_dir: Path, tool: str = "wget") -> Path:
-    """
-    Download a file from a given URL to a target directory using the specified download tool.
+    def download_file(self, url: str, tool: str = "wget") -> Path:
 
-    Args:
-        url (str): URL of the file to download.
-        target_dir (Path): Directory where the file should be saved.
-        tool (str): The download tool to use ('wget' or 'curl'). Defaults to 'wget'.
+        target_file = self.fungi_path / Path(url).name
+        cmd = ["wget", "-nc", "-P", str(self.fungi_path), url] if tool == "wget" else ["curl", "-O", str(target_file),
+                                                                                       url]
 
-    Returns:
-        Path: Path to the downloaded file.
+        result = subprocess.run(cmd)
+        if result.returncode != 0 or not target_file.exists():
+            raise RuntimeError(f"Failed to download {url}")
 
-    Raises:
-        RuntimeError: If the file download fails.
-    """
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target_file = target_dir / Path(url).name
+        return target_file
 
-    if tool == "wget":
-        result = subprocess.run(["wget", "-nc", "-P", str(target_dir), url])
-    elif tool == "curl":
-        result = subprocess.run(["curl", "-O", str(target_file), url])
-    else:
-        raise ValueError("Unsupported download tool. Use 'wget' or 'curl'.")
+    def download_and_extract(self, url: str, target_dir: Path) -> None:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        zip_path = target_dir / Path(url).name
 
-    if result.returncode != 0 or not target_file.exists():
-        raise RuntimeError(f"Failed to download {url}")
+        print('Download:')
+        if  self.rewrite or not zip_path.exists():
+            print(f"\tDownloading from {url} to {target_dir}")
+            zip_file = self.download_file(url)
+            print(f"\tDownload of {url} complete\n")
+        else:
+            zip_file = zip_path
+            print(f"\tFile already downloaded to {zip_file}\n")
 
-    return target_file
+        print('Extract:')
+        if not self.no_extraction:
+            print(f"\tExtracting {zip_file}")
+            with zipfile.ZipFile(zip_file, "r") as zip_ref:
+                zip_ref.extractall(target_dir)
+            print(f"\tUnzipped to {target_dir}\n")
+        else:
+            print(f"\tSkipping extraction of {zip_file}\n")
 
+        print('Cleanup:')
+        if not (self.keep_zip or self.no_extraction):
+            print(f"\tRemoving the zip file {zip_file}")
+            zip_file.unlink()
+            print(f"\tRemoved {zip_file}")
+        else:
+            print(f"\tKeeping the zip file {zip_file}\n")
 
-def generate_img_link(subset: str, size: str) -> str:
-    """
-    Generate the download link for images based on the provided subset and size.
+    def download_metadata(self) -> None:
+        metadata_url = f"{self.DOWNLOAD_ROOT}/metadata.zip"
+        self.download_and_extract(metadata_url, self.fungi_path / "metadata")
 
-    Args:
-        subset (str): Subset of the dataset.
-        size (str): Size of the images.
+    def download_images(self, subset: str, size: str) -> None:
+        splits = ["train", "val", "test"] + (["dna-test"] if self.HAS_DNA[subset] else [])
+        for split in splits:
+            img_link = self.generate_img_link(
+                subset=subset,
+                size=size,
+                split=split
+            )
+            self.download_and_extract(img_link, self.fungi_path)
 
-    Returns:
-        str: Download link for the images.
-    """
-    size_str = size + "p" if size != "fullsize" else "fullsize"
-    if subset != "full":
-        return f"{DOWNLOAD_ROOT}/FungiTastic-{SUBSET2STR[subset]}-{size_str}.zip"
-    else:
-        return f"{DOWNLOAD_ROOT}/FungiTastic-{size_str}.zip"
+    def download_satellite_data(self) -> None:
+        satellite_files = ['satellite_NIR.zip', 'satellite_RGB.zip']
+        for file in satellite_files:
+            satellite_link = f"{self.DOWNLOAD_ROOT}/{file}"
+            self.download_and_extract(satellite_link, self.fungi_path)
 
+    def download_climatic_data(self) -> None:
+        climatic_url = f"{self.DOWNLOAD_ROOT}/climatic.zip"
+        self.download_and_extract(climatic_url, self.fungi_path)
 
-def download_dataset(
-    subset: str,
-    size: str,
-    save_path: Path,
-    rewrite: bool = False,
-    keep_zip: bool = False,
-    no_extraction: bool = False,
-) -> None:
-    """
-    Download and optionally extract the FungiTastic dataset and metadata.
+    def download_masks(self) -> None:
+        masks_url = f"{self.DOWNLOAD_ROOT}/masks.zip"
+        self.download_and_extract(masks_url, self.fungi_path)
 
-    Args:
-        subset (str): Subset of the dataset to download.
-        size (str): Size of the images to download.
-        save_path (Path): Root directory for downloading dataset.
-        rewrite (bool, optional): Rewrite existing files. Defaults to False.
-        keep_zip (bool, optional): Keep the downloaded zip files. Defaults to False.
-        no_extraction (bool, optional): Do not extract the downloaded zip files. Defaults to False.
-    """
-    fungi_path = save_path / "FungiTastic"
-    fungi_path.mkdir(parents=True, exist_ok=True)
+    def generate_img_link(self, subset: str, size: str, split: str) -> str:
+        size_str = f"{size}p" if size != "fullsize" else "fullsize"
+        if subset != "full":
+            return (f"{self.DOWNLOAD_ROOT}/"
+                    f"FungiTastic-{self.SUBSET2STR.get(subset, '')}-{split}-{size_str}.zip")
+        else:
+            return (f"{self.DOWNLOAD_ROOT}/"
+                    f"FungiTastic-{split}-{size_str}.zip")
 
-    # Download and extract metadata
-    metadata_link = f"{DOWNLOAD_ROOT}/metadata.zip"
-    metadata_folder = fungi_path / "metadata"
-    metadata_folder.mkdir(parents=True, exist_ok=True)
-    metadata_path = metadata_folder / "metadata.zip"
+    def download(self, subset: str = None, size: str = None) -> None:
+        if self.metadata:
+            self.download_metadata()
 
-    if not metadata_path.exists() or rewrite:
-        print(f"Downloading metadata from {metadata_link} to {metadata_folder}")
-        metadata_zip = download_file(metadata_link, metadata_folder)
-        print("Download complete")
-    else:
-        metadata_zip = metadata_path
-        print(f"Metadata already downloaded to {metadata_zip}")
+        if self.images:
+            self.download_images(subset, size)
 
-    if not no_extraction:
-        with zipfile.ZipFile(metadata_zip, "r") as zip_ref:
-            zip_ref.extractall(fungi_path)
-        print(f"Unzipped metadata to {fungi_path}")
+        if self.satellite:
+            self.download_satellite_data()
 
-    # Download and extract images
-    img_link = generate_img_link(subset, size)
-    img_zip_path = fungi_path / Path(img_link).name
+        if self.climatic:
+            self.download_climatic_data()
 
-    if not img_zip_path.exists() or rewrite:
-        print(f"Downloading images from {img_link} to {fungi_path}")
-        img_zip = download_file(img_link, fungi_path)
-        print("Download complete")
-    else:
-        img_zip = img_zip_path
-        print(f"Images already downloaded to {img_zip}")
+        if self.masks:
+            self.download_masks()
 
-    if not no_extraction:
-        with zipfile.ZipFile(img_zip, "r") as zip_ref:
-            zip_ref.extractall(fungi_path)
-        print(f"Unzipped images to {fungi_path}")
+    @staticmethod
+    def validate_params(params) -> None:
+        save_path = Path(params.save_path)
+        if not save_path.exists():
+            raise FileNotFoundError(f"Data root not found: {save_path}")
 
-    if not keep_zip:
-        img_zip.unlink()
-        print(f"Removed {img_zip}")
-        metadata_zip.unlink()
-        print(f"Removed {metadata_zip}")
+        if params.images and not (params.subset and params.size):
+            raise ValueError("Subset and size must be provided to download images.")
 
+        if params.subset and params.subset not in FungiTasticDownloader.SUBSETS:
+            raise ValueError(f"Invalid subset: {params.subset}")
 
-def validate_args(args) -> None:
-    """
-    Validate the provided command line arguments.
+        if params.subset == 'dna-test' and not FungiTasticDownloader.HAS_DNA[params.subset]:
+            raise ValueError(f"Subset {params.subset} does not have DNA data.")
 
-    Args:
-        args: Command line arguments.
-
-    Raises:
-        FileNotFoundError: If the specified data root directory does not exist.
-        ValueError: If the subset or size is invalid.
-    """
-    save_path = Path(args.save_path)
-    if not save_path.exists():
-        raise FileNotFoundError(f"Data root not found: {save_path}")
-
-    if args.subset not in SUBSETS:
-        raise ValueError(f"Invalid subset: {args.subset}")
-
-    if args.size not in SIZES:
-        raise ValueError(
-            f"Invalid size for subset {args.subset}: {args.size}. "
-            f"Available sizes are: {', '.join(SIZES)}"
-        )
+        if params.size and params.size not in FungiTasticDownloader.SIZES:
+            raise ValueError(
+                f"Invalid size: {params.size}. Available sizes are: {', '.join(FungiTasticDownloader.SIZES)}"
+            )
 
 
 def parse_arguments() -> argparse.Namespace:
-    """
-    Parse and return the command line arguments.
-
-    Returns:
-        argparse.Namespace: Parsed command line arguments.
-    """
     parser = argparse.ArgumentParser(description="Download FungiTastic dataset.")
-    parser.add_argument(
-        "--subset",
-        type=str,
-        default="fs",
-        choices=SUBSETS,
-        help="Subset of the dataset to download.",
-    )
-    parser.add_argument(
-        "--size",
-        type=str,
-        default="300",
-        choices=SIZES,
-        help="Size of the images to download.",
-    )
-    parser.add_argument(
-        "--save_path",
-        type=str,
-        default="your_datasets_path",
-        help="Root directory for saving datasets.",
-    )
-    parser.add_argument(
-        "--rewrite", action="store_true", help="Rewrite existing files."
-    )
-    parser.add_argument(
-        "--keep_zip", action="store_true", help="Keep the downloaded zip files."
-    )
-    parser.add_argument(
-        "--no_extraction",
-        action="store_true",
-        help="Do not extract the downloaded zip files.",
-    )
+    parser.add_argument("--save_path",
+                        type=str,
+                        required=True,
+                        help="Root directory for saving datasets.")
+    parser.add_argument("--subset",
+                        type=str,
+                        choices=FungiTasticDownloader.SUBSETS,
+                        help="Subset of the dataset to download.")
+    parser.add_argument("--size",
+                        type=str,
+                        choices=FungiTasticDownloader.SIZES,
+                        help="Size of the images to download.")
+    parser.add_argument("--rewrite",
+                        action="store_true",
+                        help="Rewrite existing files.")
+    parser.add_argument("--keep_zip",
+                        action="store_true",
+                        help="Keep the downloaded zip files.")
+    parser.add_argument("--no_extraction",
+                        action="store_true",
+                        help="Do not extract the downloaded zip files.")
+    parser.add_argument("--climatic",
+                        action="store_true",
+                        help="Download climatic data.")
+    parser.add_argument("--satellite",
+                        action="store_true",
+                        help="Download satellite data.")
+    parser.add_argument("--masks",
+                        action="store_true",
+                        help="Download masks.")
+    parser.add_argument("--images",
+                        action="store_true",
+                        help="Download images.")
+    parser.add_argument("--metadata",
+                        action="store_true",
+                        help="Download metadata.")
 
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_arguments()
-    validate_args(args)
-    download_dataset(
-        args.subset,
-        args.size,
-        Path(args.save_path),
-        args.rewrite,
-        args.keep_zip,
-        args.no_extraction,
+    FungiTasticDownloader.validate_params(args)
+
+    downloader = FungiTasticDownloader(
+        save_path=Path(args.save_path),
+        rewrite=args.rewrite,
+        keep_zip=args.keep_zip,
+        no_extraction=args.no_extraction,
+        metadata=args.metadata,
+        images=args.images,
+        satellite=args.satellite,
+        climatic=args.climatic,
+        masks=args.masks,
     )
+
+    downloader.download(args.subset, args.size)

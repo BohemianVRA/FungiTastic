@@ -49,5 +49,5 @@ Downloading segmentation masks, climate data and satellite images:
 
 ```
 cd datasets
-python download.py --masks --climate --satellite --save_path "./"  
+python download.py --masks --climatic --satellite --save_path "./"  
 ```

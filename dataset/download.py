@@ -30,7 +30,7 @@ class FungiTasticDownloader:
     """
 
     SUBSETS = ["full", "fs", "m"]
-    SIZES = ["300", "500", "720p", "fullsize"]
+    SIZES = ["300", "500", "720", "fullsize"]
     SUBSET2STR = {"fs": "FewShot", "m": "Mini"}
     HAS_DNA = {
         "full": True,

@@ -44,6 +44,8 @@ After extraction, the zip files are deleted.
 - **keep_zip**: Do not delete the downloaded zip files (default: False)
 - **no_extraction**: Do not extract the downloaded zip files (default: False)
 - **rewrite**: Rewrite existing files (default: False)
+- **satellite**: Download satellite data.
+- **climatic**: Download climatic data.
 
 Downloading segmentation masks, climate data and satellite images:
 

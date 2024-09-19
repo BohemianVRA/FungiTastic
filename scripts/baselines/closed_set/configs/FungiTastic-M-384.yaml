@@ -1,0 +1,24 @@
+# data
+augmentations: 'vit_heavy'
+image_size: [384, 384]
+dataset: "FungiTastic-Mini"
+
+# model
+architecture: "resnet18.a1_in1k"
+
+# training
+train:
+loss: 'CrossEntropyLoss'
+optimizer: 'SGD'
+scheduler: 'plateau'
+epochs: 100
+learning_rate: 0.01
+batch_size: 64
+accumulation_steps: 1
+
+# other
+random_seed: 777
+workers: 8
+multigpu: False
+tags: ["FungiTastic-M-CloseSet", "384x384"]
+root_path: "../"

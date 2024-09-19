@@ -7,15 +7,18 @@ import matplotlib.pyplot as plt
 
 from dataset.fungi import FungiTastic
 
-
+# Default color maps
 DEFAULT_CMAP_SEQ = 'cividis_r'
 DEFAULT_CMAP_QUAL = 'Accent'
 
 
 class FungiTasticVis(FungiTastic):
     """
-    Aggregates utilities for visualization purposes
+    Aggregates utilities for visualization purposes.
+    Inherits from FungiTastic and provides methods to visualize data such as species,
+    genus, habitat, and substrate frequencies, as well as example images.
     """
+
     habitat2short = {
     'Acidic oak woodland': 'acidic oak',
     'Deciduous woodland': 'deciduous woodland',
@@ -77,6 +80,28 @@ class FungiTasticVis(FungiTastic):
     def plot_species_freq(self, save_path=None, save_name='species_freq.pdf', figsize=(30, 4), show_names=True, base_fs=15,
                           split_by_genus=False, ax=None, show=True, title=None, ret_species2color=False, species2color=None,
                           category_id_order=None, ret_category_id_order=False, y_labels_off=False, y_max=None, ret_y_max=False):
+
+        """
+        Plot the frequency of species in the dataset.
+        Parameters:
+            - save_path: Optional path to save the plot.
+            - save_name: Name of the file to save the plot as.
+            - figsize: Size of the figure.
+            - show_names: Whether to show species names on the x-axis.
+            - base_fs: Base font size for the plot.
+            - split_by_genus: Whether to color bars by genus.
+            - ax: Axis to plot on.
+            - show: Whether to display the plot.
+            - title: Title of the plot.
+            - ret_species2color: Whether to return the species-to-color mapping.
+            - species2color: Optional mapping of species to colors.
+            - category_id_order: Order of categories to plot.
+            - ret_category_id_order: Whether to return the category order.
+            - y_labels_off: Whether to hide y-axis labels.
+            - y_max: Maximum y-axis value.
+            - ret_y_max: Whether to return the y-axis maximum value.
+        """
+
         matplotlib.rc('axes', edgecolor='black')
         if title is None:
             f"{self.name} label frequency"
@@ -166,6 +191,7 @@ class FungiTasticVis(FungiTastic):
         return ret
 
     def plot_genus_freq(self, save_path=None, save_name='genus_freq.pdf', figsize=(10, 4)):
+        """Plot the frequency of genus in the dataset."""
         plt.figure(figsize=figsize)
         self.df.genus.value_counts().plot(
             kind='bar',
@@ -187,6 +213,7 @@ class FungiTasticVis(FungiTastic):
         plt.show()
 
     def plot_habitat_freq(self, figsize=(10, 4)):
+        """Plot the frequency of habitats in the dataset."""
         plt.figure(figsize=figsize)
         # replace habitat names with shorter versions
         habitat = self.df['habitat'].apply(lambda x: self.habitat2short[x] if x in self.habitat2short else x)
@@ -203,6 +230,7 @@ class FungiTasticVis(FungiTastic):
         plt.show()
 
     def plot_substrat_freq(self, figsize=(10, 4)):
+        """Plot the frequency of substrates in the dataset."""
         plt.figure(figsize=figsize)
         # replace substrat names with shorter versions
         substrat = self.df['substrate'].apply(lambda x: self.substrate2short[x] if x in self.substrate2short else x)

@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os
 
@@ -9,22 +10,98 @@ import wandb
 from fgvc.core.training import predict, train
 from fgvc.datasets import get_dataloaders
 from fgvc.losses import FocalLossWithLogits, SeesawLossWithLogits
-from fgvc.utils.experiment import (get_optimizer_and_scheduler, load_args,
-                                   load_config, load_model,
-                                   load_train_metadata, save_config)
+from fgvc.utils.experiment import (
+    get_optimizer_and_scheduler,
+    load_config,
+    load_model,
+    load_train_metadata,
+    parse_unknown_args,
+    save_config,
+)
 from fgvc.utils.utils import set_cuda_device, set_random_seed
-from fgvc.utils.wandb import (finish_wandb, init_wandb, resume_wandb,
-                              set_best_scores_in_summary)
+from fgvc.utils.wandb import (
+    finish_wandb,
+    init_wandb,
+    resume_wandb,
+    set_best_scores_in_summary,
+)
 from PIL import Image, ImageFile
 from scipy.special import softmax
 from torch.utils.data import DataLoader
+
 from utils.hfhub import export_model_to_huggingface_hub_from_checkpoint
 
+# To handle truncated images
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+# Logger setup
 logger = logging.getLogger("script")
 
-SCRATCH_DIR = os.getenv("SCRATCHDIR", "./")
+
+def load_args(args: list = None) -> tuple[argparse.Namespace, dict]:
+    """
+    Load training script arguments using argparse.
+
+    Parameters
+    ----------
+    args : list, optional
+        Optional list of arguments for parsing, by default None.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the parsed args (Namespace) and extra arguments (dict).
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--train-path",
+        help="Path to a training metadata file.",
+        type=str,
+        required=True,
+    )
+    parser.add_argument(
+        "--test-path", help="Path to a test metadata file.", type=str, required=True
+    )
+    parser.add_argument(
+        "--config-path",
+        help="Path to a training config yaml file.",
+        type=str,
+        required=True,
+    )
+    parser.add_argument(
+        "--cuda-devices",
+        help="Visible cuda devices (cpu,0,1,2,...).",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--wandb-entity",
+        help="Entity name for logging experiment to W&B.",
+        type=str,
+        required=False,
+    )
+    parser.add_argument(
+        "--wandb-project",
+        help="Project name for logging experiment to W&B.",
+        type=str,
+        required=False,
+    )
+    parser.add_argument(
+        "--resume-exp-name",
+        help="Experiment name to resume training.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "--hfhub-owner",
+        help="User or project name for uploading the model to HuggingFace Hub.",
+        type=str,
+        default=None,
+    )
+
+    args, unknown_args = parser.parse_known_args(args)
+    extra_args = parse_unknown_args(unknown_args)
+    return args, extra_args
 
 
 def evaluate(
@@ -35,32 +112,36 @@ def evaluate(
     device: torch.device = "cpu",
     log_images: bool = False,
 ):
-    """Evaluate model and create example visualizations.
+    """
+    Evaluate the model and log the evaluation metrics to W&B.
 
     Parameters
     ----------
-    model
-        Model to evaluate.
-    testloader
-        Test data dataloader.
-    path
-        Directory to store example visualizations.
-    device
-        Cuda or CPU device.
-    log_images
-        Whether to store
+    model : nn.Module
+        The model to be evaluated.
+    trainloader : DataLoader
+        DataLoader for training data.
+    testloader : DataLoader
+        DataLoader for test data.
+    path : str
+        Directory to store visualizations.
+    device : torch.device, optional
+        Device to use (CPU or CUDA), by default "cpu".
+    log_images : bool, optional
+        Flag to log images to W&B, by default False.
     """
     if wandb.run is None:
         return
 
-        # evaluate model
+    # Evaluate model
     logger.info("Creating predictions.")
     preds, targs, _, scores = predict(model, testloader, device=device)
     print(scores)
     argmax_preds = preds.argmax(1)
     max_conf = softmax(preds, 1).max(1)
     softmax_values = softmax(preds, 1)
-    # create wandb prediction table
+
+    # Create W&B prediction table
     train_df = trainloader.dataset.df
     test_df = testloader.dataset.df
     id2class = dict(zip(train_df["class_id"], train_df["species"]))
@@ -71,15 +152,12 @@ def evaluate(
             lambda image_path: wandb.Image(data_or_path=Image.open(image_path))
         )
 
-    top5_indices = np.argsort(-softmax_values, axis=1)[
-        :, :5
-    ]  # Get indices of top 5 softmax values
+    top5_indices = np.argsort(-softmax_values, axis=1)[:, :5]
     top5_species = [str([id2class[i] for i in row]) for row in top5_indices]
     top5_softmax = [
         str(softmax_values[i][top5_indices[i]]) for i in range(len(top5_indices))
     ]
 
-    # Create new columns in pred_df for top 5 predictions and softmax values
     pred_df["top5-species"] = top5_species
     pred_df["top5-softmax"] = top5_softmax
     pred_df["species"] = test_df["species"]
@@ -87,10 +165,11 @@ def evaluate(
     pred_df["class_id"] = test_df["class_id"]
     pred_df["class_id-predicted"] = argmax_preds
     pred_df["max-confidence"] = max_conf
+
     for col in ["image_path"]:
         pred_df[col] = test_df[col]
-    wandb.log({"pred_table": wandb.Table(dataframe=pred_df)})
 
+    wandb.log({"pred_table": wandb.Table(dataframe=pred_df)})
     wandb.log(
         {
             "test/F1": scores["F1"],
@@ -103,7 +182,23 @@ def evaluate(
 def add_metadata_info_to_config(
     config: dict, train_df: pd.DataFrame, test_df: pd.DataFrame
 ) -> dict:
-    """Include information from metadata to the training configuration."""
+    """
+    Add metadata information (such as class count) to the training configuration.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary for training.
+    train_df : pd.DataFrame
+        Training data metadata.
+    test_df : pd.DataFrame
+        Test data metadata.
+
+    Returns
+    -------
+    dict
+        Updated configuration with metadata information.
+    """
     assert "class_id" in train_df and "class_id" in test_df
     config["number_of_classes"] = len(train_df["class_id"].unique())
     config["training_samples"] = len(train_df)
@@ -120,23 +215,45 @@ def train_clf(
     wandb_entity: str = None,
     wandb_project: str = None,
     resume_exp_name: str = None,
+    hfhub_owner: str = None,
     **kwargs,
 ):
-    """Train model on the classification task."""
+    """
+    Train a model on a classification task.
+
+    Parameters
+    ----------
+    train_metadata : str, optional
+        Path to training metadata, by default None.
+    valid_metadata : str, optional
+        Path to validation metadata, by default None.
+    config_path : str, optional
+        Path to the training config file, by default None.
+    cuda_devices : str, optional
+        Comma-separated list of CUDA devices, by default None.
+    wandb_entity : str, optional
+        W&B entity name for logging, by default None.
+    wandb_project : str, optional
+        W&B project name for logging, by default None.
+    resume_exp_name : str, optional
+        Experiment name to resume from checkpoint, by default None.
+    hfhub_owner : str, optional
+        HuggingFace Hub user for uploading the model, by default None.
+    """
     if train_metadata is None or valid_metadata is None or config_path is None:
-        # load script args
+        # Load script args if not provided
         args, extra_args = load_args()
+        train_metadata = args.train_path
+        valid_metadata = args.test_path
         config_path = args.config_path
         cuda_devices = args.cuda_devices
         wandb_entity = args.wandb_entity
         wandb_project = args.wandb_project
-        save_to_hfhub = args.save_to_hfhub
+        hfhub_owner = args.hfhub_owner
     else:
         extra_args = kwargs
 
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-    # load training config
+    # Load training configuration
     logger.info("Loading training config.")
     config = load_config(
         config_path,
@@ -145,21 +262,21 @@ def train_clf(
         resume_exp_name=resume_exp_name,
     )
 
-    # set device and random seed
+    # Set device and random seed
     device = set_cuda_device(cuda_devices)
     set_random_seed(config["random_seed"])
 
-    # load metadata
+    # Load training and validation metadata
     logger.info("Loading training and validation metadata.")
-    train_df, valid_df, test_df = load_train_metadata(config)
+    train_df, valid_df = load_train_metadata(train_metadata, valid_metadata)
     config = add_metadata_info_to_config(config, train_df, valid_df)
 
-    # load model and create optimizer and lr scheduler
+    # Load model and optimizer
     logger.info("Creating model, optimizer, and scheduler.")
     model, model_mean, model_std = load_model(config)
-
     optimizer, scheduler = get_optimizer_and_scheduler(model, config)
-    # create dataloaders
+
+    # Create DataLoaders
     logger.info("Creating DataLoaders.")
     trainloader, validloader, _, _ = get_dataloaders(
         train_df,
@@ -172,7 +289,7 @@ def train_clf(
         num_workers=config["workers"],
     )
 
-    # create loss function
+    # Loss function selection
     logger.info("Creating loss function.")
     if config["loss"] == "CrossEntropyLoss":
         criterion = nn.CrossEntropyLoss()
@@ -185,7 +302,7 @@ def train_clf(
         logger.error(f"Unknown loss: {config['loss']}")
         raise ValueError()
 
-    # init wandb
+    # Initialize W&B logging
     if wandb_entity is not None and wandb_project is not None:
         if resume_exp_name is None:
             init_wandb(
@@ -200,15 +317,12 @@ def train_clf(
                 project=wandb_project,
             )
 
-    # save config to json in experiment path
+    # Save config for this run
     if resume_exp_name is None:
         save_config(config)
 
-    # train model
+    # Train the model
     logger.info("Training the model.")
-
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-
     train(
         model=model,
         trainloader=trainloader,
@@ -233,13 +347,12 @@ def train_clf(
         ema_decay=config.get("ema_decay", 0.9999),
     )
 
-    # evaluate model
-    model_filename = os.path.join(config["exp_path"] + "/best_f1.pth")
+    # Load best model and evaluate
+    model_filename = os.path.join(config["exp_path"], "best_f1.pth")
     model.load_state_dict(torch.load(model_filename, map_location="cpu"))
-
     _, test_loader, _, _ = get_dataloaders(
         None,
-        test_df,
+        valid_df,
         augmentations=config["augmentations"],
         image_size=config["image_size"],
         model_mean=model_mean,
@@ -250,7 +363,7 @@ def train_clf(
 
     evaluate(model, trainloader, test_loader, path=config["exp_path"], device=device)
 
-    # finish wandb run
+    # Finish W&B run
     run_id = finish_wandb()
     if run_id is not None:
         logger.info("Setting the best scores in the W&B run summary.")
@@ -260,17 +373,18 @@ def train_clf(
             scores=lambda df: [col for col in df if col.startswith("val/")],
         )
 
+    # HuggingFace Hub export
     def count_parameters(trained_model):
         return sum(p.numel() for p in trained_model.parameters() if p.requires_grad)
 
-    if save_to_hfhub:
+    if hfhub_owner is not None:
         try:
             num_params = count_parameters(model)
             config["mean"] = model_mean
             config["std"] = model_std
-            config["params"] = np.round(num_params / 1000000, 1)
+            config["params"] = np.round(num_params / 1_000_000, 1)
             export_model_to_huggingface_hub_from_checkpoint(
-                config=config, repo_owner=args.hfhub_owner, saved_model="f1"
+                config=config, repo_owner=hfhub_owner, saved_model="f1"
             )
         except Exception as e:
             print(f"Exception during export: {e}")

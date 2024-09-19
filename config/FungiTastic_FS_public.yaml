@@ -1,0 +1,24 @@
+exp_name: 'DF24_FS'
+
+# dataset
+dataset: 'DF24FS'
+num_workers: 4
+split: 'test'
+
+# embedding method
+feature_model: 'dinov2'
+#feature_model_name: 'vitl14_reg'
+
+#classification method
+classifier: 'nn'
+#classifier: 'nn'
+batch_size: 32
+
+# other
+random_seed: 777
+root_path: "../../../"
+path_out: "../../../out/"
+debug: False
+
+data_path: 'path_to_FungiTastic'
+feature_path: 'path_to_features'

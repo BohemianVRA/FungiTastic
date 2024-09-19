@@ -248,19 +248,19 @@ tags:
 - ecology
 - fungi
 - FGVC
-library_name: DanishFungi
+library_name: FungiTastic Dataset
 license: cc-by-nc-4.0
 ---
 # Model card for {repo_name}
 
 ## Model Details
-- **Model Type:** Danish Fungi Classification 
+- **Model Type:** Fine-grained classification of fungi species
 - **Model Stats:**
   - Params (M): {num_params}
   - Image size: {image_size} x {image_size}
 - **Papers:**
-- **Original:** ??
-- **Train Dataset:** {dataset} --> https://sites.google.com/view/danish-fungi-dataset
+  - **Original:** --> ???
+  - **Train Dataset:** FungiTastic --> https://arxiv.org/pdf/2408.13632
 
 ## Model Usage
 ### Image Embeddings
@@ -283,6 +283,14 @@ output = model(train_transforms(img).unsqueeze(0))
 ## Citation"""
 
     citations = """ 
+```bibtex
+@article{picek2024fungitastic,
+  title={FungiTastic: A multi-modal dataset and benchmark for image categorization},
+  author={Picek, Lukas and Janouskova, Klara and Sulc, Milan and Matas, Jiri},
+  journal={arXiv preprint arXiv:2408.13632},
+  year={2024}
+}
+```
 ```bibtex
 @InProceedings{Picek_2022_WACV,
     author    = {Picek, Luk\'a\v{s} and \v{S}ulc, Milan and Matas, Ji\v{r}{\'\i} and Jeppesen, Thomas S. and Heilmann-Clausen, Jacob and L{\ae}ss{\o}e, Thomas and Fr{\o}slev, Tobias},
@@ -332,7 +340,7 @@ def create_model_card_file(model_card: str, exp_path: str) -> str:
     return model_card_path
 
 
-def hfhub_load_args() -> tuple[argparse.Namespace, list[str]]:
+def hfhub_load_args():
     """
     Load script arguments for exporting a model to HuggingFace Hub.
 

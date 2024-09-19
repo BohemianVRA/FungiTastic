@@ -1,0 +1,45 @@
+name: FungiTastic -- 384x384
+project: ${envvar:WANDB_PROJECT}
+entity: ${envvar:WANDB_ENTITY}
+description: Close-set classification sweep with convnets and image size of 384x384.
+program: train.py
+
+method: grid
+parameters:
+    architecture:
+        values: [
+            "resnet50.a1_in1k",
+            "resnext50_32x4d.a1_in1k"
+            "tf_efficientnet_b3.ap_in1k",
+            "tf_efficientnetv2_b3.in21k_ft_in1k",
+            "convnext_base.fb_in1k",
+            "vit_base_patch16_384.augreg_in21k_ft_in1k",
+            "swin_base_patch4_window7_384.ms_in1k",
+            "beit_base_patch16_384.in22k_ft_in22k_in1k",
+        ]
+    learning_rate:
+        values: [0.1, 0.01]
+    random_seed:
+        values: [555, 666, 777, 888, 999]
+
+command:
+  - ${env}
+  - ${interpreter}
+  - ${program}
+  - "--train-path"
+  - ${envvar:TRAIN_METADATA_PATH}
+  - "--val-path"
+  - ${envvar:VAL_METADATA_PATH}
+  - "--test-path"
+  - ${envvar:TEST_METADATA_PATH}
+  - "--config-path"
+  - "./configs/FungiTastic-384.yaml"
+  - "--cuda-devices"
+  - ${envvar:CUDA_VISIBLE_DEVICES}
+  - "--wandb-entity"
+  - ${envvar:WANDB_ENTITY}
+  - "--wandb-project"
+  - ${envvar:WANDB_PROJECT}
+  - "--hfhub-owner"
+  - ${envvar:HFHUB_OWNER}
+  - ${args}

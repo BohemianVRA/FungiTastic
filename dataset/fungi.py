@@ -89,6 +89,8 @@ class FungiTastic(ImageDataset):
             for unk_spec in unknown_species:
                 self.label2category_id[unk_spec] = self.unkwnown_id
 
+            self.n_classes = len(self.df['category_id'].unique())
+
     def get_class_id(self, idx: int) -> int:
         """
         Get class id of i-th element in the dataset.

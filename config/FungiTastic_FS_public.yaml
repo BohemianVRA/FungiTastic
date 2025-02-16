@@ -2,7 +2,7 @@ exp_name: 'DF24_FS'
 
 # dataset
 dataset: 'DF24FS'
-num_workers: 4
+num_workers: 0
 split: 'test'
 
 # embedding method

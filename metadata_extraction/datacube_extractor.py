@@ -34,6 +34,12 @@ class DataCubeExtractor:
         """Returns 'tile has data'"""
 
         with rasterio.open(raster_path, "r") as tif_file:
+
+            meta = tif_file.meta
+            meta.update(
+                count=tif_file.count
+            )  # update the count of the meta to match the number of layers
+
             self.transformer = pyproj.Transformer.from_crs(
                 "epsg:4326", tif_file.crs, always_xy=True
             )  # xx = lon, yy = lat
@@ -175,7 +181,6 @@ class ImageDataCubeExtractor(DataCubeExtractor):
 
         assert self.tile_data is not None, "Tile data not loaded!"
 
-        lat, lon, survey_id = item.lat, item.lon, item.surveyId
         index_x, index_y = self._item_to_tile_index(item)
         patch_tile = self._select_image_patch(index_x, index_y, self.image_patch_size)
 
@@ -187,17 +192,12 @@ class ImageDataCubeExtractor(DataCubeExtractor):
             "L",
         )
 
-        # construct the outup file path of the patch as './CD/AB/XXXXABCD.jpeg'
-        path = tile_image_output_dir
-        for d in (str(survey_id)[-2:], str(survey_id)[-4:-2]):
-            path = os.path.join(path, d)
-            if not os.path.exists(path):
-                os.makedirs(path)
+        image_name = f"{item.observationID}.jpeg"
 
-        image_name = f"{survey_id}.jpeg"
-        image.save(path + "/" + image_name, "JPEG", quality=100)
+        image_path = tile_image_output_dir + "/" + image_name
+        image.save(image_path, "JPEG", quality=100)
 
-        return path
+        return image_path
 
     def _select_image_patch(
         self, index_x: int, index_y: int, patch_size: int

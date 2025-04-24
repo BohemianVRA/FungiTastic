@@ -15,6 +15,7 @@ def late_metadata_fusion(
     df: pd.DataFrame,
     model,
     dataloader: DataLoader,
+    labels: list[int],
     device: torch.device,
     target_feature: str,
     selected_features: list[str],
@@ -30,6 +31,8 @@ def late_metadata_fusion(
         Trained model for making predictions.
     dataloader : DataLoader
         DataLoader for the dataset.
+    labels:
+        Sorted list of all the training labels.
     device : torch.device
         Device to run the model on.
     target_feature : str
@@ -89,7 +92,7 @@ def late_metadata_fusion(
         _predictions = _weighted_predictions["predictions"]
         _predictions_raw = _weighted_predictions["predictions_raw"]
         print(
-            get_metrics(ground_truth_labels, _predictions, _predictions_raw),
+            get_metrics(ground_truth_labels, _predictions, _predictions_raw, labels)
         )
 
     return weighted_predictions_complete
@@ -331,6 +334,7 @@ def get_metrics(
     ground_truth_labels: list,
     predictions: list,
     predictions_raw: list,
+    labels :list
 ) -> tuple[float, float, float]:
     """
     Computes evaluation metrics.
@@ -343,6 +347,8 @@ def get_metrics(
         List of predicted labels.
     predictions_raw : list
         List of raw predictions from the model.
+    labels: list
+        Sorted list of all train labels.
 
     Returns
     -------
@@ -351,5 +357,5 @@ def get_metrics(
     """
     f1 = f1_score(ground_truth_labels, predictions, average="macro")
     accuracy = accuracy_score(ground_truth_labels, predictions)
-    recall_3 = top_k_accuracy_score(ground_truth_labels, predictions_raw, k=3)
+    recall_3 = top_k_accuracy_score(ground_truth_labels, predictions_raw, k=3, labels=labels)
     return f1, accuracy, recall_3

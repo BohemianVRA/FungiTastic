@@ -139,6 +139,6 @@ wandb/
 metadata/
 experiments/
 logs/
-
+data/
 # Mac filesystem
 .DS_Store

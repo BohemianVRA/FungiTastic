@@ -2,7 +2,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from datacube_extractor import DataCubeExtractor
+from datacube_extractor import DataCubeExtractor, ImageDataCubeExtractor
 
 
 def get_quarter_dates(year: str, quarter: str) -> str:

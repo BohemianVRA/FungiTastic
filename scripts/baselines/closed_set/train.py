@@ -14,6 +14,7 @@ from fgvc.utils.experiment import (
     get_optimizer_and_scheduler,
     load_config,
     load_model,
+    load_test_metadata,
     load_train_metadata,
     parse_unknown_args,
     save_config,
@@ -38,7 +39,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 logger = logging.getLogger("script")
 
 
-def load_args(args: list = None) -> tuple[argparse.Namespace, dict]:
+def load_args(args: list = None):
     """
     Load training script arguments using argparse.
 
@@ -58,6 +59,9 @@ def load_args(args: list = None) -> tuple[argparse.Namespace, dict]:
         help="Path to a training metadata file.",
         type=str,
         required=True,
+    )
+    parser.add_argument(
+        "--val-path", help="Path to a val metadata file.", type=str, required=True
     )
     parser.add_argument(
         "--test-path", help="Path to a test metadata file.", type=str, required=True
@@ -132,7 +136,11 @@ def evaluate(
     """
     if wandb.run is None:
         return
-
+    
+    # if "class_id" not in train_df:
+    #     logger.info("No .")
+    #     return
+    
     # Evaluate model
     logger.info("Creating predictions.")
     preds, targs, _, scores = predict(model, testloader, device=device)
@@ -144,25 +152,26 @@ def evaluate(
     # Create W&B prediction table
     train_df = trainloader.dataset.df
     test_df = testloader.dataset.df
-    id2class = dict(zip(train_df["class_id"], train_df["species"]))
 
     pred_df = pd.DataFrame()
     if log_images:
         pred_df["image"] = test_df["image_path"].apply(
             lambda image_path: wandb.Image(data_or_path=Image.open(image_path))
         )
+    
+    id2species = dict(zip(train_df["class_id"], train_df["scientificName"]))
 
     top5_indices = np.argsort(-softmax_values, axis=1)[:, :5]
-    top5_species = [str([id2class[i] for i in row]) for row in top5_indices]
+    top5_species = [str([id2species[i] for i in row]) for row in top5_indices]
     top5_softmax = [
         str(softmax_values[i][top5_indices[i]]) for i in range(len(top5_indices))
     ]
 
     pred_df["top5-species"] = top5_species
     pred_df["top5-softmax"] = top5_softmax
-    pred_df["species"] = test_df["species"]
-    pred_df["species-predicted"] = [id2class[x] for x in argmax_preds]
-    pred_df["class_id"] = test_df["class_id"]
+    # pred_df["species"] = test_df["species"]
+    pred_df["species-predicted"] = [id2species[x] for x in argmax_preds]
+    # pred_df["class_id"] = test_df["class_id"]
     pred_df["class_id-predicted"] = argmax_preds
     pred_df["max-confidence"] = max_conf
 
@@ -180,28 +189,32 @@ def evaluate(
 
 
 def add_metadata_info_to_config(
-    config: dict, train_df: pd.DataFrame, test_df: pd.DataFrame
+    config: dict, train_df: pd.DataFrame, val_df: pd.DataFrame, test_df: pd.DataFrame
 ) -> dict:
     """
-    Add metadata information (such as class count) to the training configuration.
+    Add metadata information (such as class count) to the configuration file.
 
     Parameters
     ----------
     config : dict
         Configuration dictionary for training.
     train_df : pd.DataFrame
-        Training data metadata.
+        Training metadata.
+    val_df : pd.DataFrame
+        Validation metadata.
     test_df : pd.DataFrame
-        Test data metadata.
+        Test metadata.
 
     Returns
     -------
     dict
         Updated configuration with metadata information.
     """
-    assert "class_id" in train_df and "class_id" in test_df
+    assert "class_id" in train_df and "class_id" in val_df
     config["number_of_classes"] = len(train_df["class_id"].unique())
+    config["validation_classes"] = len(val_df["class_id"].unique())
     config["training_samples"] = len(train_df)
+    config["validation_samples"] = len(val_df)
     config["test_samples"] = len(test_df)
     return config
 
@@ -210,6 +223,7 @@ def train_clf(
     *,
     train_metadata: str = None,
     valid_metadata: str = None,
+    test_metadata: str = None,
     config_path: str = None,
     cuda_devices: str = None,
     wandb_entity: str = None,
@@ -227,6 +241,8 @@ def train_clf(
         Path to training metadata, by default None.
     valid_metadata : str, optional
         Path to validation metadata, by default None.
+    test_metadata : str, optional
+        Path to test metadata, by default None.
     config_path : str, optional
         Path to the training config file, by default None.
     cuda_devices : str, optional
@@ -244,7 +260,8 @@ def train_clf(
         # Load script args if not provided
         args, extra_args = load_args()
         train_metadata = args.train_path
-        valid_metadata = args.test_path
+        valid_metadata = args.val_path
+        test_metadata = args.test_path
         config_path = args.config_path
         cuda_devices = args.cuda_devices
         wandb_entity = args.wandb_entity
@@ -266,10 +283,11 @@ def train_clf(
     device = set_cuda_device(cuda_devices)
     set_random_seed(config["random_seed"])
 
-    # Load training and validation metadata
+    # Load training, validation, and test metadata
     logger.info("Loading training and validation metadata.")
     train_df, valid_df = load_train_metadata(train_metadata, valid_metadata)
-    config = add_metadata_info_to_config(config, train_df, valid_df)
+    test_df = load_test_metadata(test_metadata)
+    config = add_metadata_info_to_config(config, train_df, valid_df, test_df)
 
     # Load model and optimizer
     logger.info("Creating model, optimizer, and scheduler.")
@@ -342,17 +360,17 @@ def train_clf(
         mixup=config.get("mixup"),
         cutmix=config.get("cutmix"),
         mixup_prob=config.get("mixup_prob"),
-        apply_ema=config.get("apply_ema"),
-        ema_start_epoch=config.get("ema_start_epoch", 0),
-        ema_decay=config.get("ema_decay", 0.9999),
+        # apply_ema=config.get("apply_ema"),
+        # ema_start_epoch=config.get("ema_start_epoch", 0),
+        # ema_decay=config.get("ema_decay", 0.9999),
     )
 
     # Load best model and evaluate
     model_filename = os.path.join(config["exp_path"], "best_f1.pth")
     model.load_state_dict(torch.load(model_filename, map_location="cpu"))
-    _, test_loader, _, _ = get_dataloaders(
+    _, testloader, _, _ = get_dataloaders(
         None,
-        valid_df,
+        test_df,
         augmentations=config["augmentations"],
         image_size=config["image_size"],
         model_mean=model_mean,
@@ -360,8 +378,8 @@ def train_clf(
         batch_size=config["batch_size"],
         num_workers=config["workers"],
     )
-
-    evaluate(model, trainloader, test_loader, path=config["exp_path"], device=device)
+    
+    evaluate(model, trainloader, testloader, path=config["exp_path"], device=device)
 
     # Finish W&B run
     run_id = finish_wandb()
@@ -379,6 +397,7 @@ def train_clf(
 
     if hfhub_owner is not None:
         try:
+            logger.info("Trying to save the model to HuggingFace hub...")
             num_params = count_parameters(model)
             config["mean"] = model_mean
             config["std"] = model_std
@@ -386,6 +405,7 @@ def train_clf(
             export_model_to_huggingface_hub_from_checkpoint(
                 config=config, repo_owner=hfhub_owner, saved_model="f1"
             )
+            logger.info("Model sucessfully saved to HuggingFace hub!")
         except Exception as e:
             print(f"Exception during export: {e}")
 

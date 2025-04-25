@@ -10,7 +10,7 @@ import pandas as pd
 from dataset.fungi import FungiTastic
 
 
-class FeatureFungiDataset(FungiTastic):
+class FeatureFungiTastic(FungiTastic):
     def __init__(self, root: str, features_file: str, data_subset: str = 'Mini', split: str = 'val', size: str = '300',
                  task: str = 'closed', transform: T.Compose = None, rescale=True, **kwargs):
         super().__init__(

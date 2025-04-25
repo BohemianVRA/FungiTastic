@@ -13,7 +13,7 @@ from tqdm import tqdm
 import yaml
 import wandb
 
-from dataset.fetaure_fungi import FeatureFungiDataset
+from dataset.fetaure_fungi import FeatureFungiTastic
 from scripts.baselines.few_shot.classifier import PrototypeClassifier, NNClassifier
 
 
@@ -48,7 +48,7 @@ def test_fungi(cfg, split):
 
     features_file = os.path.join(cfg.feature_path, cfg.feature_model, f"224x224_no_micro_{split}.h5")
 
-    dataset_train = FeatureFungiDataset(
+    dataset_train = FeatureFungiTastic(
         root=cfg.data_path,
         features_file=features_file,
         split='train',
@@ -58,7 +58,7 @@ def test_fungi(cfg, split):
         transform=None,
     )
 
-    dataset_eval = FeatureFungiDataset(
+    dataset_eval = FeatureFungiTastic(
         root=cfg.data_path,
         features_file=features_file,
         split=split,
@@ -108,11 +108,6 @@ def main():
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
-    # set wandb to offline mode
-    os.environ['WANDB_MODE'] = 'offline'
-    run = wandb.init(config=cfg, project='DF24', entity='klara', name=cfg.exp_name)
-
-    cfg = wandb.config
     # convert to SimpleNamespace for easier access
     cfg = SimpleNamespace(**dict(cfg))
 
@@ -120,4 +115,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    visualize()

@@ -17,9 +17,8 @@ Classes only used for evaluation of the models.
 
 
 class Classifier(torch.nn.Module):
-    def __init__(self, cfg, device):
+    def __init__(self, device):
         super().__init__()
-        self.cfg = cfg
         self.device = device
 
         # add option to save the results for further processing
@@ -87,42 +86,24 @@ class Classifier(torch.nn.Module):
 
 
 class PrototypeClassifier(Classifier):
-    def __init__(self, cfg, train_embeddings, device='cuda'):
+    def __init__(self, train_embeddings, device='cuda'):
         """
         :param cfg: OmegaConf config object
         :param train_embeddings: list of C torch arrays of shape [N_C, D] where N_C is the number of training samples
         of class C and D is the dimensionality of the embeddings
         """
-        super().__init__(cfg, device=device)
+        super().__init__(device=device)
 
         # C x D array of class prototypes, make them a parameter so that they are moved to the device
-        self.class_prototypes = self.get_prototypes(train_embeddings, mode=cfg.classifier)
+        self.class_prototypes = self.get_prototypes(train_embeddings, mode='centroid')
         self.class_prototypes = torch.nn.Parameter(self.class_prototypes, requires_grad=False)
 
     def get_prototypes(self, embeddings, mode='centroid'):
         if mode == 'centroid':
             class_prototypes = torch.stack([class_embs.mean(dim=0) for class_embs in embeddings])
-        elif mode == 'one_shot':
-            # take the first occurence of each class as the prototype, and classify based on the closest prototype
-            class_prototypes = embeddings[:, 0]
+        else:
+            raise ValueError(f"Unknown prototype classifier mode: {mode}")
         return class_prototypes
-
-    def make_prediction_dist(self, embeddings):
-        """
-
-        :param embeddings: torch.Tensor of shape (batch_size, n_channels, height, width)
-        :return: probabilities of shape (batch_size, n_classes) computed based on
-        the similarity of the embeddings to the class prototypes
-        """
-
-        # compute the similarity of each embedding to each prototype
-        # embeddings - [N, D], class_prototypes - [C, D]
-        dists = torch.cdist(embeddings, self.class_prototypes)
-        # get the class with the smallest distance
-        cls = torch.argmin(dists, dim=1)
-        # get the confidence of the prediction
-        conf = 1 - dists[torch.arange(embeddings.shape[0]), cls]
-        return cls, conf
 
     def make_prediction(self, embeddings, plot_sim_hist=False, ret_probs=False):
         # compute the cosine similarity of each embedding to each prototype
@@ -132,6 +113,7 @@ class PrototypeClassifier(Classifier):
         probs = torch.nn.functional.softmax(similarities, dim=1)
         # get the confidence of the prediction from softmax
         conf = probs.max(dim=1).values
+
         if plot_sim_hist:
             import matplotlib.pyplot as plt
             plt.hist(similarities[1].cpu().numpy(), bins=100)
@@ -143,13 +125,13 @@ class PrototypeClassifier(Classifier):
 
 
 class NNClassifier(Classifier):
-    def __init__(self, cfg, train_embeddings, device='cuda'):
+    def __init__(self, train_embeddings, device='cuda'):
         """
         :param cfg: config object, namespace
         :param train_embeddings: list of C torch arrays of shape [N_C, D] where N_C is the number of training samples
         of class C and D is the dimensionality of the embeddings
         """
-        super().__init__(cfg, device=device)
+        super().__init__(device=device)
 
         self.index, self.idx2cls = self.build_index(train_embeddings)
 

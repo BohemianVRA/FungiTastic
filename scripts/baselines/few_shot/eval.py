@@ -1,6 +1,5 @@
 from pathlib import Path
 from types import SimpleNamespace
-from functools import partial
 import argparse
 import os
 
@@ -9,15 +8,20 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 
 import numpy as np
 import torch
-from tqdm import tqdm
 import yaml
-import wandb
 
-from dataset.feature_fungi import FeatureFungiTasticTastic
+from dataset.feature_fungi import FeatureFungiTastic
 from scripts.baselines.few_shot.classifier import PrototypeClassifier, NNClassifier
 
 
 def get_dataloader(test_dataset, batch_size=256, num_workers=0):
+    """Creates a DataLoader for the test dataset with specified batch size and workers.
+    
+    Args:
+        test_dataset: Dataset to create loader for
+        batch_size: Number of samples per batch
+        num_workers: Number of subprocesses for data loading
+    """
     test_dataloader = torch.utils.data.DataLoader(
         test_dataset,
         batch_size=batch_size,
@@ -31,6 +35,11 @@ def get_dataloader(test_dataset, batch_size=256, num_workers=0):
 
 
 def get_classifier_cls(classifier_name):
+    """Returns the appropriate classifier class based on the name.
+    
+    Args:
+        classifier_name: Either 'centroid' for PrototypeClassifier or 'nn' for NNClassifier
+    """
     if classifier_name == 'centroid':
         return PrototypeClassifier
     elif classifier_name == 'nn':
@@ -40,6 +49,16 @@ def get_classifier_cls(classifier_name):
 
 
 def get_classifier_embeddings(dataset_train):
+    """Extracts embeddings for each class from the training dataset.
+    
+    Args:
+        dataset_train: Training dataset containing class embeddings
+        
+    Returns:
+        tuple: (class_embeddings, empty_classes)
+            - class_embeddings: List of tensors containing embeddings for each class
+            - empty_classes: List of class indices that had no embeddings
+    """
     class_embeddings = []
     empty_classes = []
     n_classes = min(torch.inf, dataset_train.n_classes)
@@ -55,10 +74,21 @@ def get_classifier_embeddings(dataset_train):
 
 
 def test_fungi(path_out, data_path, feature_path, feature_model, classifier_name, split, debug=False):
-    features_file_train = os.path.join(feature_path, feature_model, f"224x224_no_micro_train.h5")
-    features_file_eval = os.path.join(feature_path, feature_model, f"224x224_no_micro_{split}.h5")
+    """Evaluates a few-shot classifier on the Fungi dataset.
+    
+    Args:
+        path_out: Directory to save results
+        data_path: Path to the dataset
+        feature_path: Path to pre-computed features
+        feature_model: Name of the feature model used
+        classifier_name: Type of classifier to use ('centroid' or 'nn')
+        split: Dataset split to evaluate on
+        debug: If True, runs only 3 batches for quick testing
+    """
+    features_file_train = os.path.join(feature_path, feature_model, "224x224_train.h5")
+    features_file_eval = os.path.join(feature_path, feature_model, f"224x224_{split}.h5")
 
-    dataset_train = FeatureFungiTasticTastic(
+    dataset_train = FeatureFungiTastic(
         root=data_path,
         features_file=features_file_train,
         split='train',
@@ -68,7 +98,7 @@ def test_fungi(path_out, data_path, feature_path, feature_model, classifier_name
         transform=None,
     )
 
-    dataset_eval = FeatureFungiTasticTastic(
+    dataset_eval = FeatureFungiTastic(
         root=data_path,
         features_file=features_file_eval,
         split=split,
@@ -97,18 +127,25 @@ def test_fungi(path_out, data_path, feature_path, feature_model, classifier_name
     classifier.save_results(out_dir=result_dir, file_name=f'{exp_name}')
 
 
-def main():
-    config_path = '../../../config/FungiTastic_FS.yaml'
-    with open(config_path, "r") as f:
-        cfg = yaml.safe_load(f)
-    cfg = SimpleNamespace(**cfg)
-
-    # convert to SimpleNamespace for easier access
-    cfg = SimpleNamespace(**dict(cfg))
-
-    test_fungi(cfg, split=cfg.split)
+def main(cfg):
+    """Main function that runs the evaluation based on configuration.
+    
+    Args:
+        cfg: Configuration object containing all necessary parameters
+    """
+    test_fungi(path_out=cfg.path_out, data_path=cfg.data_path, feature_path=cfg.feature_path,
+               feature_model=cfg.feature_model, classifier_name=cfg.classifier, split=cfg.split,
+               debug=cfg.debug)
 
 
 if __name__ == '__main__':
-    # main()
-    visualize()
+    parser = argparse.ArgumentParser(description='Evaluation')
+    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/few_shot/config/fs.yaml',  
+                        help='Path to the config file',)
+    args = parser.parse_args()
+
+    with open(args.config_path, "r") as f:
+        cfg = yaml.safe_load(f)
+    cfg = SimpleNamespace(**cfg)
+
+    main(cfg)

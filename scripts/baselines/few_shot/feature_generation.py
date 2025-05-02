@@ -1,4 +1,3 @@
-import importlib
 from types import SimpleNamespace
 from typing import Sequence
 import argparse
@@ -26,21 +25,39 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 class FeatureExtractor(torch.nn.Module):
+    """Base class for feature extraction from images using various vision models.
+    
+    This abstract class provides common functionality for extracting and normalizing
+    image features using different vision models like CLIP, DINOv2, etc.
+    """
     def __init__(self, device):
         super(FeatureExtractor, self).__init__()
         self.device = device
 
     def extract_features(self, image_path):
+        """Extract features from an image.
+        
+        Args:
+            image_path: Path to the image or PIL Image object
+            
+        Returns:
+            Normalized feature embeddings
+        """
         raise NotImplementedError
 
     def load(self):
+        """Load the model weights and prepare it for inference."""
         raise NotImplementedError
 
     @staticmethod
     def normalize_embedding(embs):
-        """
-        Normalize the embedding to -1, 1 range
-        :return:
+        """Normalize the embedding vectors to unit length (L2 normalization).
+        
+        Args:
+            embs: Raw embedding tensor
+            
+        Returns:
+            Normalized embeddings in range [-1, 1]
         """
         embs = embs.float()
         norm_features = torch.nn.functional.normalize(embs, dim=1, p=2)
@@ -48,9 +65,13 @@ class FeatureExtractor(torch.nn.Module):
 
     @staticmethod
     def quantize_normalized_embedding(embs):
-        """
-        Quantize the normalized embedding to 8 bit unsigned integers
-        :return:
+        """Quantize normalized embeddings to 8-bit unsigned integers.
+        
+        Args:
+            embs: Normalized embeddings in range [-1, 1]
+            
+        Returns:
+            Quantized embeddings as numpy array of uint8
         """
         embs = embs.float()
 
@@ -62,12 +83,18 @@ class FeatureExtractor(torch.nn.Module):
 
 
 class DinoV2(FeatureExtractor):
+    """Feature extractor using Facebook's DINOv2 vision transformer model."""
     def __init__(self, device):
         super(DinoV2, self).__init__(device)
         self.model = None
         self.transform = self.get_transform()
 
     def load(self, model_name='vitb14_reg'):
+        """Load DINOv2 model weights.
+        
+        Args:
+            model_name: Name of the DINOv2 model variant to load
+        """
         if model_name == 'vitb14_reg':
             model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
         else:
@@ -79,13 +106,14 @@ class DinoV2(FeatureExtractor):
         self.model = model
 
     def extract_features(self, image):
+        """Extract features from an image using DINOv2.
+        
+        Args:
+            image: PIL Image object
+            
+        Returns:
+            Normalized feature embeddings
         """
-
-        :param model:
-        :param image_tensor:
-        :return:
-        """
-
         if self.model is None:
             raise ValueError('Model not loaded')
 
@@ -100,6 +128,16 @@ class DinoV2(FeatureExtractor):
                 mean: Sequence[float] = IMAGENET_DEFAULT_MEAN,
                 std: Sequence[float] = IMAGENET_DEFAULT_STD,
         ):
+        """Get the image transformation pipeline for DINOv2.
+        
+        Args:
+            resize_size: Size to resize images to
+            mean: Normalization mean values
+            std: Normalization standard deviation values
+            
+        Returns:
+            Composition of image transformations
+        """
         transforms_list = [
             tfms.Resize((resize_size, resize_size), interpolation=tfms.InterpolationMode.BICUBIC),
             tfms.ToTensor(),
@@ -109,6 +147,7 @@ class DinoV2(FeatureExtractor):
 
 
 class CLIP(FeatureExtractor):
+    """Feature extractor using OpenAI's CLIP model."""
     def __init__(self, device):
         super(CLIP, self).__init__(device)
         self.model = None
@@ -117,8 +156,11 @@ class CLIP(FeatureExtractor):
         self.size = 224, 224
 
     def load(self, model_name='clip-vit-base-patch32'):
-        # 'clip-vit-base-patch32'
-        # clip-vit-large-patch14
+        """Load CLIP model weights and processor.
+        
+        Args:
+            model_name: Name of the CLIP model variant to load
+        """
         model = CLIPModel.from_pretrained(f"openai/{model_name}")
         processor = CLIPProcessor.from_pretrained(f"openai/{model_name}")
 
@@ -128,11 +170,18 @@ class CLIP(FeatureExtractor):
         self.processor = processor
 
     def extract_features(self, image):
+        """Extract features from an image using CLIP.
+        
+        Args:
+            image: PIL Image object
+            
+        Returns:
+            Normalized feature embeddings
+        """
         if self.model is None:
             raise ValueError('Model not loaded')
 
         image = image.resize(self.size, Image.BICUBIC)
-        # TODO put image on gpu before processing (check what normalization is expected for tensors)
         image_tensor_proc = self.processor(images=image, return_tensors='pt').pixel_values
 
         # get the features
@@ -142,15 +191,27 @@ class CLIP(FeatureExtractor):
 
 
 class BioCLIP(CLIP):
+    """Feature extractor using BioCLIP model, specialized for biological images."""
     def load(self, model_name='bioclip'):
-        # bioclip-vit-b-16-inat-only
+        """Load BioCLIP model weights and processor.
+        
+        Args:
+            model_name: Name of the BioCLIP model variant to load
+        """
         model, preprocess_train, preprocess_val = open_clip.create_model_and_transforms('hf-hub:imageomics/bioclip')
-        # tokenizer = open_clip.get_tokenizer('hf-hub:imageomics/bioclip')
         self.processor = preprocess_val
         model.to(self.device)
         self.model = model
 
     def extract_features(self, image):
+        """Extract features from an image using BioCLIP.
+        
+        Args:
+            image: PIL Image object
+            
+        Returns:
+            Normalized feature embeddings
+        """
         if self.model is None:
             raise ValueError('Model not loaded')
 
@@ -164,6 +225,14 @@ class BioCLIP(CLIP):
 
 
 def get_model(model_name):
+    """Factory function to create and load the appropriate feature extractor model.
+    
+    Args:
+        model_name: Name of the model to load ('clip', 'dinov2', or 'bioclip')
+        
+    Returns:
+        Loaded and configured feature extractor model
+    """
     if model_name == 'clip':
         model = CLIP(device=DEVICE)
     elif model_name == 'dinov2':
@@ -179,14 +248,19 @@ def get_model(model_name):
 
 
 def generate_embeddings(data_path, feature_path, model_name='clip', data_split='val'):
-    # image_path = '/mnt/datagrid/plants/DanishFungiDataset/DanishFungi24/DF24-FS/DF24-FS-test-300'
-
+    """Generate and save image embeddings for the FungiTastic dataset.
+    
+    Args:
+        data_path: Path to the dataset root directory
+        feature_path: Path where feature embeddings will be saved
+        model_name: Name of the model to use for feature extraction
+        data_split: Dataset split to process ('val', 'test', 'train', or 'all')
+    """
     model = get_model(model_name)
 
     splits = [data_split] if data_split != 'all' else ['val', 'test', 'train']
 
     for split in splits:
-
         dataset = FungiTastic(
             root=data_path,
             split=split,
@@ -201,17 +275,21 @@ def generate_embeddings(data_path, feature_path, model_name='clip', data_split='
         else:
             feature_folder = os.path.join(feature_path, model_name)
 
-        # TODO: run in batch mode https://github.com/openai/CLIP/issues/175
         save_freq = -1
 
         # if it doesn't exist, create the feature directory
         Path(feature_folder).mkdir(parents=True, exist_ok=True)
 
         feature_file_full = os.path.join(feature_folder, f'224x224_{split}.h5')
+
+        # if the file exists, skip the feature generation
+        if os.path.exists(feature_file_full):
+            print(f'Skipping {feature_file_full} because it already exists')
+            continue
+
         cols = ['im_name', 'embedding']
         df = pd.DataFrame(columns=cols)
 
-        # idxs = np.arange(int(0.4 * len(nico)), len(nico))[::-1]
         idxs = np.arange(len(dataset))
         im_names, embs = [], []
         for idx in tqdm(idxs):
@@ -238,21 +316,20 @@ def generate_embeddings(data_path, feature_path, model_name='clip', data_split='
         new = pd.DataFrame({'im_name': im_names, 'embedding': embs})
         df = pd.concat([df, new], ignore_index=True)
         df.to_hdf(feature_file_full, key='df', mode='w')
+        print(f'Saved {len(df)} embeddings to {feature_file_full}')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate embeddings for fungi dataset')
-    parser.add_argument('--model', type=str, default='bioclip', choices=['clip', 'dinov2', 'bioclip'],
-                        help='Model to use for feature extraction')
-    parser.add_argument('--split', type=str, default='val',
-                        help='Dataset split to extract features for', choices=['train', 'val', 'test', 'all'])
+    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/few_shot/config/fs.yaml',  
+                        help='Path to the config file',)
     args = parser.parse_args()
 
-    with open('../../../config/path.yaml', "r") as f:
+    with open(args.config_path, "r") as f:
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
-    generate_embeddings(data_path=cfg.data_path, model_name=args.model, data_split=args.split, feature_path=cfg.feature_path)
+    generate_embeddings(data_path=cfg.data_path, model_name=cfg.model, data_split=cfg.split, feature_path=cfg.feature_path)
 
 
 

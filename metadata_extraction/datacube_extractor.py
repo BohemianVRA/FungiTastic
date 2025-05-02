@@ -1,3 +1,8 @@
+"""
+This module provides classes for extracting and processing data from raster files (like GeoTIFFs).
+It includes functionality for both data extraction and image generation from raster data.
+"""
+
 import os.path as osp
 import os
 
@@ -8,6 +13,24 @@ from PIL import Image
 
 
 class DataCubeExtractor:
+    """
+    A class for extracting data from raster files at specific geographic coordinates.
+    
+    This class handles the conversion between geographic coordinates (latitude/longitude)
+    and raster coordinates, allowing for data extraction at specific points or regions.
+    
+    Attributes:
+        tile_bbox (tuple): Bounding box coordinates for the tile (left, bottom, width, height)
+        band_index (int): Index of the raster band to extract data from
+        padding (float): Padding around the tile in degrees
+        lat_column (str): Name of the latitude column in input data
+        lon_column (str): Name of the longitude column in input data
+        transformer (pyproj.Transformer): Coordinate transformer between WGS84 and raster CRS
+        tile_data (numpy.ndarray): The loaded raster data for the tile
+        x_resolution (float): Resolution of the raster in x direction
+        y_resolution (float): Resolution of the raster in y direction
+    """
+
     def __init__(
         self,
         tile_bbox: tuple,
@@ -16,6 +39,16 @@ class DataCubeExtractor:
         lat_column: str = "latitude",
         lon_column: str = "longitude",
     ):
+        """
+        Initialize the DataCubeExtractor.
+
+        Args:
+            tile_bbox (tuple): Bounding box coordinates (left, bottom, width, height) in degrees
+            band_index (int, optional): Index of the raster band to extract. Defaults to 1.
+            padding (float, optional): Padding around the tile in degrees. Defaults to 1.
+            lat_column (str, optional): Name of the latitude column. Defaults to "latitude".
+            lon_column (str, optional): Name of the longitude column. Defaults to "longitude".
+        """
         self.tile_bbox = tile_bbox
         self.band_index = band_index
         self.padding = padding
@@ -31,7 +64,15 @@ class DataCubeExtractor:
         self.right, self.top = None, None
 
     def load_raster(self, raster_path: str) -> bool:
-        """Returns 'tile has data'"""
+        """
+        Load raster data for the specified tile from a GeoTIFF file.
+
+        Args:
+            raster_path (str): Path to the GeoTIFF file
+
+        Returns:
+            bool: True if the tile contains data, False otherwise
+        """
 
         with rasterio.open(raster_path, "r") as tif_file:
 
@@ -67,8 +108,13 @@ class DataCubeExtractor:
 
     def __getitem__(self, item: tuple[float, float]):
         """
-        :param item: the GPS location (latitude, longitude)
-        :return: value
+        Extract data value at the specified geographic coordinates.
+
+        Args:
+            item (tuple[float, float]): Geographic coordinates (latitude, longitude)
+
+        Returns:
+            float or None: The data value at the specified coordinates, or None if out of bounds
         """
 
         # convert the lat, lon coordinates to raster EPSG.
@@ -92,6 +138,15 @@ class DataCubeExtractor:
             return None
 
     def _item_to_tile_index(self, item: tuple[float, float]):
+        """
+        Convert geographic coordinates to raster indices.
+
+        Args:
+            item (tuple[float, float]): Geographic coordinates (latitude, longitude)
+
+        Returns:
+            tuple[int, int] or tuple[None, None]: Raster indices (x, y) or (None, None) if out of bounds
+        """
         item_x, item_y = self.transformer.transform(
             yy=item[self.lat_column], xx=item[self.lon_column]
         )
@@ -107,7 +162,17 @@ class DataCubeExtractor:
     def _search_radius_mean_indexed(
         self, x_index: int, y_index: int, radius_index: int = 1
     ) -> float:
-        """Search around the given index for the max value. Returns 0 if no value is found."""
+        """
+        Calculate mean value in a radius around the specified index.
+
+        Args:
+            x_index (int): X coordinate in raster space
+            y_index (int): Y coordinate in raster space
+            radius_index (int, optional): Search radius in pixels. Defaults to 1.
+
+        Returns:
+            float: Mean value in the search radius, or 0 if no valid data found
+        """
         try:
             return self.tile_data[
                 y_index - radius_index : y_index + radius_index,
@@ -119,6 +184,18 @@ class DataCubeExtractor:
 
 
 class ImageDataCubeExtractor(DataCubeExtractor):
+    """
+    A specialized DataCubeExtractor for generating image patches from raster data.
+    
+    This class extends DataCubeExtractor to add functionality for converting raster data
+    to image format and saving image patches around specific points of interest.
+    
+    Attributes:
+        convert_to_uint8 (bool): Whether to convert data to 8-bit unsigned integers
+        gamma_for_conversion (float): Gamma correction value for image conversion
+        image_patch_size (int): Size of the image patches to generate
+    """
+
     def __init__(
         self,
         tile_bbox: tuple,
@@ -128,6 +205,17 @@ class ImageDataCubeExtractor(DataCubeExtractor):
         gamma_for_conversion: float = 2.5,
         image_patch_size: int = 128,
     ):
+        """
+        Initialize the ImageDataCubeExtractor.
+
+        Args:
+            tile_bbox (tuple): Bounding box coordinates (left, bottom, width, height) in degrees
+            band_index (int, optional): Index of the raster band to extract. Defaults to 1.
+            padding (float, optional): Padding around the tile in degrees. Defaults to 2.0.
+            convert_to_uint8 (bool, optional): Whether to convert to 8-bit images. Defaults to True.
+            gamma_for_conversion (float, optional): Gamma correction value. Defaults to 2.5.
+            image_patch_size (int, optional): Size of image patches in pixels. Defaults to 128.
+        """
         super().__init__(tile_bbox, band_index=band_index, padding=padding)
 
         self.convert_to_uint8 = convert_to_uint8
@@ -135,7 +223,21 @@ class ImageDataCubeExtractor(DataCubeExtractor):
         self.image_patch_size = image_patch_size
 
     def convert_tile_data_to_uint8(self, tile_data: np.ndarray) -> np.ndarray:
-        """??? Imported from previous project -> Likely used for image creation"""
+        """
+        Convert raster data to 8-bit unsigned integer format for image generation.
+        
+        The conversion process includes:
+        1. Normalizing values to 0-1 range
+        2. Applying gamma correction
+        3. Scaling to 0-255 range
+        4. Converting to uint8
+
+        Args:
+            tile_data (np.ndarray): Input raster data
+
+        Returns:
+            np.ndarray: 8-bit unsigned integer image data
+        """
         tile_data = np.clip(tile_data / 10000.0, a_min=0, a_max=1.0)
         tile_data = (tile_data ** (1 / self.gamma_for_conversion)) * 256
         tile_data = tile_data.astype(np.uint8)
@@ -143,7 +245,15 @@ class ImageDataCubeExtractor(DataCubeExtractor):
         return tile_data
 
     def save_tile_image(self, tile_image_output_dir: str) -> None:
-        """Saves whole tile"""
+        """
+        Save the entire tile as an image file.
+
+        Args:
+            tile_image_output_dir (str): Directory to save the image file
+
+        Raises:
+            AssertionError: If output directory doesn't exist or tile data isn't loaded
+        """
         assert osp.isdir(
             tile_image_output_dir
         ), f"Photo output directory '{tile_image_output_dir}' does not exist!"
@@ -177,7 +287,19 @@ class ImageDataCubeExtractor(DataCubeExtractor):
         image.save(image_path)
 
     def save_patch_image(self, item, tile_image_output_dir: str) -> str:
-        """Saves patch surrounding the item"""
+        """
+        Save an image patch centered on the specified item's location.
+
+        Args:
+            item: Data point containing location information
+            tile_image_output_dir (str): Directory to save the image patch
+
+        Returns:
+            str: Path to the saved image file
+
+        Raises:
+            AssertionError: If tile data isn't loaded
+        """
 
         assert self.tile_data is not None, "Tile data not loaded!"
 
@@ -202,6 +324,17 @@ class ImageDataCubeExtractor(DataCubeExtractor):
     def _select_image_patch(
         self, index_x: int, index_y: int, patch_size: int
     ) -> np.ndarray:
+        """
+        Extract an image patch centered on the specified coordinates.
+
+        Args:
+            index_x (int): X coordinate in raster space
+            index_y (int): Y coordinate in raster space
+            patch_size (int): Desired size of the patch in pixels
+
+        Returns:
+            np.ndarray: Image patch data
+        """
         left_x = max(index_x - patch_size // 2, 0)
         right_x = min(index_x + patch_size // 2, self.tile_data.shape[1])
         top_y = max(index_y - patch_size // 2, 0)

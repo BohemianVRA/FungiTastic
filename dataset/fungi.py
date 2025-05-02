@@ -8,9 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import yaml
-
 from fgvc.datasets import ImageDataset
-
 # Use seaborn style for better visualization
 from matplotlib import style
 
@@ -77,6 +75,7 @@ class FungiTastic(ImageDataset):
         self.data_subset = data_subset
         self.split = split
         self.task = task
+        self.img_root = root
 
         if split in ['train', 'val']:
             assert "category_id" in df

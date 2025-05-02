@@ -18,6 +18,8 @@ The benchmark is designed to support:
 - (iv) few-shot learning, 
 - (v) domain shift, and many more.
 
+Detailed instructions on how to download the dataset are in the [dataset download guide](dataset/README.md).
+
 For most use cases, we provide tailored baselines, a multitude of ready-to-use pre-trained models on 
 [HuggingFace](https://huggingface.co/collections/BVRA/fungitastic-66a227ce0520be533dc6403b),
 and a framework for model training. The documentation and the baselines are/_will be_ available at in this repo

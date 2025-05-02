@@ -31,7 +31,7 @@ dataset subset with the image resolution of 300px
 and saves it in the current directory. The argument 'save_path' is required.
    
 ```
-cd datasets
+cd dataset
 python download.py --metadata --images --subset "m" --size "300" --save_path "./"  
 ```
 

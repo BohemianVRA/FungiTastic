@@ -1,3 +1,12 @@
+"""
+Utility functions for metadata extraction and processing.
+
+This module provides helper functions for:
+1. Date handling for quarterly data extraction
+2. Creating and managing geographic tiles
+3. Extracting data from raster files at specific locations
+"""
+
 from typing import Any
 
 import numpy as np
@@ -7,10 +16,21 @@ from datacube_extractor import DataCubeExtractor, ImageDataCubeExtractor
 
 def get_quarter_dates(year: str, quarter: str) -> str:
     """
-    Returns quarter formatted date strings for ecodatacude data extraction.
-    :param year: year
-    :param quarter: quarter
-    :return: string with reference to given quarter and string
+    Generate date range string for a specific quarter of a year.
+    
+    This function is used to create date range strings for ecodatacube data extraction.
+    The quarters are defined as:
+    - Q1: Dec 2 (prev year) to Mar 20
+    - Q2: Mar 21 to Jun 24
+    - Q3: Jun 25 to Sep 12
+    - Q4: Sep 13 to Dec 1
+
+    Args:
+        year (str): The year to generate dates for
+        quarter (str): The quarter number (1-4)
+
+    Returns:
+        str: Date range string in format "YYYY.MM.DD..YYYY.MM.DD"
     """
     if quarter == 1:
         return f"{year - 1}.12.02..{year}.03.20"
@@ -29,12 +49,19 @@ def create_tile_bboxes(
     longitude_col="lon",
 ) -> list:
     """
-    Creates squared tiles of a given size that fits within given extend.
-    :param metadata: pd.dataframe with metadata about the species observations
-    :param tile_size_deg: size of a tile in degrees
-    :param latitude_col: name of a column in the metadata file containing latitude
-    :param longitude_col: name of a column in the metadata file containing longitude
-    :return: list wit tiles coordinates in degrees [[left, bottom, width, height],...]
+    Create a grid of square tiles that cover the extent of the metadata.
+    
+    This function divides the geographic extent of the metadata into square tiles
+    of the specified size. Each tile is defined by its bottom-left corner and dimensions.
+
+    Args:
+        metadata (pd.DataFrame): DataFrame containing species observation metadata
+        tile_size_deg (tuple): Size of each tile in degrees (width, height)
+        latitude_col (str, optional): Name of the latitude column. Defaults to "lat".
+        longitude_col (str, optional): Name of the longitude column. Defaults to "lon".
+
+    Returns:
+        list: List of tile coordinates, each as [left, bottom, width, height] in degrees
     """
     min_latitude, max_latitude = (
         metadata[latitude_col].min(),
@@ -64,13 +91,20 @@ def get_metadata_in_tile(
     metadata, tile_bbox, latitude_col="lat", longitude_col="lon", padding=0.25
 ):
     """
-    Returns all observations for a given tile + a little bit around based on padding.
-    :param metadata: pd.dataframe with species observations  metadata
-    :param tile_bbox: tile coordinates in degrees as list with [left, bottom, width, height]
-    :param latitude_col: name of a column in the metadata file containing latitude
-    :param longitude_col: name of a column in the metadata file containing longitude
-    :param padding:
-    :return:
+    Filter metadata to include only observations within a tile's bounds plus padding.
+    
+    This function selects all observations that fall within the specified tile's
+    boundaries, with an additional padding area around the edges.
+
+    Args:
+        metadata (pd.DataFrame): DataFrame containing species observation metadata
+        tile_bbox (tuple): Tile coordinates [left, bottom, width, height] in degrees
+        latitude_col (str, optional): Name of the latitude column. Defaults to "lat".
+        longitude_col (str, optional): Name of the longitude column. Defaults to "lon".
+        padding (float, optional): Additional padding around tile in degrees. Defaults to 0.25.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame containing only observations within the tile bounds
     """
     left, bottom, width, height = tile_bbox
 
@@ -92,6 +126,26 @@ def search_tile(
     lat_column: str = "lat",
     lon_column: str = "lon",
 ) -> dict[int, Any]:
+    """
+    Extract data from a raster file for all observations within a tile.
+    
+    This function:
+    1. Filters observations to those within the tile bounds
+    2. Loads the raster data for the tile
+    3. Extracts values for each observation
+    4. Optionally saves image patches for each observation
+
+    Args:
+        position_df (pd.DataFrame): DataFrame containing observation locations
+        tile_bbox (tuple): Tile coordinates [left, bottom, width, height] in degrees
+        raster_path (str): Path to the raster file
+        tile_image_output_dir (str, optional): Directory to save image patches. Defaults to None.
+        lat_column (str, optional): Name of the latitude column. Defaults to "lat".
+        lon_column (str, optional): Name of the longitude column. Defaults to "lon".
+
+    Returns:
+        dict[int, Any]: Dictionary mapping observation indices to their extracted values
+    """
     # try:
     df_in_tile = get_metadata_in_tile(position_df, tile_bbox, lat_column, lon_column)
     if len(df_in_tile) == 0:

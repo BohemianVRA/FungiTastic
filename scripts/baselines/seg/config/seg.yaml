@@ -17,4 +17,6 @@ path_out: "../../../out/"
 debug: False
 
 data_path: 'path_to_FungiTastic'
-feature_path: 'path_to_features'
+mask_path: 'path_to_masks'
+# models will be downloaded to this path
+ckpt_path: 'path_to_model_ckpts'

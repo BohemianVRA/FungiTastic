@@ -1,3 +1,4 @@
+import argparse
 import ast
 import os
 from typing import Tuple, Any
@@ -10,6 +11,9 @@ import torch
 import torchvision.transforms as T
 
 import pandas as pd
+# get root directory
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from dataset.fungi import FungiTastic
 
 
@@ -26,8 +30,9 @@ class MaskFungiTastic(FungiTastic):
             **kwargs
         )
         # load mask_test.csv
-        # gt_masks = pd.read_csv(os.path.join(root, 'masks_test2.csv'))
-        gt_masks = pd.read_parquet(os.path.join(root, 'validation_masks_v0.1.parquet'))
+        split_str = 'Validation' if split == 'val' else 'Train'
+        # gt_masks = pd.read_parquet(os.path.join(root, 'masks', f'FungiTastic-Mini-{split_str}Masks.parquet'))
+        gt_masks = pd.read_parquet(os.path.join('/mnt/vrg2/imdec/datasets/FungiTastic/', 'validation_masks_v0.1.parquet'))
 
         gt_masks.rename(columns={'file_name': 'filename'}, inplace=True)
         # gt_masks['rle'] = gt_masks['rle'].apply(ast.literal_eval)
@@ -128,14 +133,18 @@ if __name__ == '__main__':
     plt.rc('font', family='serif')
 
 
-    split = 'val'
-    with open('../config/path.yaml', "r") as f:
+    parser = argparse.ArgumentParser(description='Generate masks for fungi dataset')
+    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/seg/config/private.yaml',  
+                        help='Path to the config file',)
+    args = parser.parse_args()
+
+    with open(args.config_path, "r") as f:
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
     dataset = MaskFungiTastic(
         root=cfg.data_path,
-        split=split,
+        split=args.split,
         size='300',
         task='closed',
         data_subset='Mini',

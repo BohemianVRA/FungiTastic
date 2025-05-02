@@ -10,14 +10,18 @@ from tqdm import tqdm
 import faiss
 
 
-"""
-Classes only used for evaluation of the models.
-
-"""
-
-
 class Classifier(torch.nn.Module):
+    """Base classifier class that provides common functionality for different classification approaches.
+    
+    This abstract class implements the evaluation pipeline and results saving functionality.
+    Subclasses must implement the make_prediction method and name property.
+    """
     def __init__(self, device):
+        """Initialize the classifier.
+        
+        Args:
+            device (str): Device to run the model on ('cuda' or 'cpu')
+        """
         super().__init__()
         self.device = device
 
@@ -25,10 +29,29 @@ class Classifier(torch.nn.Module):
         self.test_results = {}
 
     def make_prediction(self, x):
+        """Make predictions for input embeddings.
+        
+        Args:
+            x: Input embeddings to classify
+            
+        Returns:
+            tuple: (predictions, confidence_scores)
+            
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         raise NotImplementedError
 
     @property
     def name(self):
+        """Get the name of the classifier.
+        
+        Returns:
+            str: Name of the classifier
+            
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         raise NotImplementedError
 
     def evaluate(self, dataloader, fast_dev_run=False):
@@ -86,11 +109,18 @@ class Classifier(torch.nn.Module):
 
 
 class PrototypeClassifier(Classifier):
+    """Classifier that uses class prototypes (centroids) for classification.
+    
+    This classifier computes the mean embedding for each class during training
+    and classifies new samples based on cosine similarity to these prototypes.
+    """
     def __init__(self, train_embeddings, device='cuda'):
-        """
-        :param cfg: OmegaConf config object
-        :param train_embeddings: list of C torch arrays of shape [N_C, D] where N_C is the number of training samples
-        of class C and D is the dimensionality of the embeddings
+        """Initialize the prototype classifier.
+        
+        Args:
+            train_embeddings (list): List of C torch arrays of shape [N_C, D] where N_C is the number 
+                of training samples of class C and D is the dimensionality of the embeddings
+            device (str, optional): Device to run the model on. Defaults to 'cuda'.
         """
         super().__init__(device=device)
 
@@ -125,11 +155,18 @@ class PrototypeClassifier(Classifier):
 
 
 class NNClassifier(Classifier):
+    """Nearest Neighbor classifier using FAISS for efficient similarity search.
+    
+    This classifier stores all training embeddings and classifies new samples
+    by finding the nearest neighbor in the training set.
+    """
     def __init__(self, train_embeddings, device='cuda'):
-        """
-        :param cfg: config object, namespace
-        :param train_embeddings: list of C torch arrays of shape [N_C, D] where N_C is the number of training samples
-        of class C and D is the dimensionality of the embeddings
+        """Initialize the nearest neighbor classifier.
+        
+        Args:
+            train_embeddings (list): List of C torch arrays of shape [N_C, D] where N_C is the number 
+                of training samples of class C and D is the dimensionality of the embeddings
+            device (str, optional): Device to run the model on. Defaults to 'cuda'.
         """
         super().__init__(device=device)
 

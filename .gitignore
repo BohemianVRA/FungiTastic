@@ -150,7 +150,7 @@ data/
 **/private.yaml
 
 #  internal scripts
-scripts/baselines/seg/eval.py
+scripts/baselines/segmentation/eval.py
 scripts/baselines/few_shot/analyze.py
 
 # output directories

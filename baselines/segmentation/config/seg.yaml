@@ -1,7 +1,3 @@
-exp_name: 'DF24_FS'
-
-# dataset
-dataset: 'DF24FS'
 num_workers: 4
 split: 'test'
 
@@ -21,4 +17,6 @@ path_out: "../../../out/"
 debug: False
 
 data_path: 'path_to_FungiTastic'
-feature_path: 'path_to_features'
+mask_path: 'path_to_masks'
+# models will be downloaded to this path
+ckpt_path: 'path_to_model_ckpts'

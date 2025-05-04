@@ -142,3 +142,17 @@ logs/
 data/
 # Mac filesystem
 .DS_Store
+
+# Configuration files
+**/config/private.taml
+**/config/private.yaml
+**/private.taml
+**/private.yaml
+
+#  internal scripts
+scripts/baselines/segmentation/eval.py
+scripts/baselines/few_shot/analyze.py
+
+# output directories
+**/out/
+

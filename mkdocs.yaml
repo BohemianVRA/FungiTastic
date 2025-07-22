@@ -1,0 +1,23 @@
+site_name: FungiTastic
+repo_url: https://github.com/bohemianvra/FungiTastic/
+repo_name: FungiTastic
+
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: brown
+    accent: lime
+
+
+markdown_extensions:
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Introduction: index.md  
+  - Datasets: dataset.md

@@ -26,6 +26,11 @@ To download the data, you have to:
 The preferred approach is to use our script to get the data that allows downloading 
 different subsets separately and in the desired image resolution.
 
+**Prerequisites:** The download script requires `wget` to be installed on your system.
+- **macOS**: `brew install wget`
+- **Ubuntu/Debian**: `sudo apt-get install wget`
+- **Windows**: Download from [wget for Windows](https://gnuwin32.sourceforge.net/packages/wget.htm) or use WSL
+
 The following example downloads the metadata (common for all subsets) and the 'FungiTastic-Mini'
 dataset subset with the image resolution of 300px
 and saves it in the current directory. The argument 'save_path' is required.

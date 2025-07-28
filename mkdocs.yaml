@@ -1,0 +1,47 @@
+site_name: FungiTastic
+repo_url: https://github.com/bohemianvra/FungiTastic/
+repo_name: FungiTastic
+
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: brown
+    accent: lime
+
+markdown_extensions:
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Introduction: index.md
+  - Datasets:
+      - Overview: dataset.md
+      - Metadata: data/metadata.md
+      - Satellite Data: data/satellite.md
+      - Climate Time Series: data/climate.md
+      - Image Captions: data/captions.md
+      - Segmentation Masks: data/masks.md
+  - Benchmarks:
+      - Overview: benchmarks.md
+      - Closed-set Classification: benchmarks/closed.md
+      - Open-set Classification: benchmarks/open.md
+      - Few-shot Learning: benchmarks/few_shot.md
+      - Chronological Shift: benchmarks/chronological.md
+      - Cost-sensitive Classification: benchmarks/cost_sensitive.md
+      - Segmentation Task: benchmarks/segmentation.md
+  - Baselines & Models:
+      - Overview: baselines_and_models.md
+      - Closed-set Models: models/closed.md
+      - Few-shot Models: models/few_shot.md
+      - Open-set Models: models/open.md
+      - VLM Fusion: models/vlm.md
+  - How to Use:
+      - Downloading the Dataset: usage/download.md
+      - Training Your Model: usage/training.md
+      - Evaluation Protocols: usage/evaluation.md
+  - Citation & Acknowledgements: citation.md

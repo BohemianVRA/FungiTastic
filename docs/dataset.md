@@ -1,3 +1,0 @@
-
-# FungiTastic dataset
-

@@ -99,6 +99,8 @@ class FungiTasticDownloader:
             else ["curl", "-O", str(target_file), url]
         )
 
+        print(f"Downloading {url} to {target_file}")
+        print(f"Command: {cmd}")
         result = subprocess.run(cmd)
         if result.returncode != 0 or not target_file.exists():
             raise RuntimeError(f"Failed to download {url}")

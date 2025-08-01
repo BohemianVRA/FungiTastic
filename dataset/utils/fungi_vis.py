@@ -1,3 +1,13 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from typing import Dict, List, Tuple, Union, Optional
+from PIL import Image
+import cv2
+
+# Fallback color palette for unknown labels
+FALLBACK_COLORS = plt.cm.Set3(np.linspace(0, 1, 20))  # 20 distinct colors
+
 import os
 
 import numpy as np
@@ -331,9 +341,3 @@ class FungiTasticVis(FungiTastic):
         plt.suptitle(f"{self.name} classes", fontsize=15, y=1.05)
         plt.show()
 
-
-if __name__ == '__main__':
-    # use same font as latex
-    if False: # only switch this on if you want latex-like font for paper visualization and you have latex installed
-        plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')

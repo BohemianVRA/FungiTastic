@@ -10,12 +10,14 @@ import os
 from tqdm import tqdm
 
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 
 from dataset.fungi import FungiTastic
 from mask_generator import GDINOSAM
 import pandas as pd
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def im2mask_path(im_path, mask_dir, img_dir):
@@ -143,8 +145,7 @@ def main(cfg):
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Generate masks for fungi dataset')
-    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/seg/config/seg.yaml',  
-                        help='Path to the config file',)
+    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, 'config/seg.yaml'))
     args = parser.parse_args()
 
     # Load configuration from YAML file

@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from mask_utils import rle_to_mask, mask_to_points, points_to_mask
 
 # get root directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

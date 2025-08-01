@@ -340,60 +340,6 @@ def visualize_masks_grid(image, masks: Union[Dict[str, np.ndarray], List[Tuple[n
     plt.show()
 
 
-def visualize_masks_comparison(image, masks1: Union[Dict[str, np.ndarray], List[Tuple[np.ndarray, str]]], 
-                              masks2: Union[Dict[str, np.ndarray], List[Tuple[np.ndarray, str]]], 
-                              title1: str = "Masks 1", title2: str = "Masks 2", 
-                              seg_task: str = 'semantic', alpha: float = 0.6,
-                              label_colors: Dict[str, Tuple[float, float, float]] = None) -> None:
-    """
-    Visualize comparison between two sets of masks.
-    
-    Args:
-        image: Input image (PIL Image, numpy array, or tensor)
-        masks1: First set of masks
-        masks2: Second set of masks
-        title1: Title for first set
-        title2: Title for second set
-        seg_task: 'semantic' or 'instance'
-        alpha: Transparency level for overlay
-    """
-    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
-    
-    # Original image
-    axes[0].imshow(image)
-    axes[0].set_title("Original Image")
-    axes[0].axis('off')
-    
-    # First set of masks
-    if seg_task == 'semantic':
-        overlay1 = create_semantic_overlay(masks1, label_colors=label_colors)
-        axes[1].imshow(image)
-        axes[1].imshow(overlay1, alpha=alpha)
-        axes[1].set_title(f"{title1})")
-    else:
-        overlay1 = create_instance_overlay(masks2, label_colors=label_colors)
-        axes[1].imshow(image)
-        axes[1].imshow(overlay1, alpha=alpha)
-        axes[1].set_title(f"{title1}")
-    axes[1].axis('off')
-    
-    # Second set of masks
-    if seg_task == 'semantic':
-        overlay2 = create_semantic_overlay(masks2, label_colors=label_colors)
-        axes[2].imshow(image)
-        axes[2].imshow(overlay2, alpha=alpha)
-        axes[2].set_title(f"{title2}")
-    else:
-        overlay2 = create_instance_overlay(masks2, label_colors=label_colors)
-        axes[2].imshow(image)
-        axes[2].imshow(overlay2, alpha=alpha)
-        axes[2].set_title(f"{title2}")
-    axes[2].axis('off')
-    
-    plt.tight_layout()
-    plt.show()
-
-
 def create_semantic_overlay(masks: Dict[str, np.ndarray], image_shape: Optional[Tuple[int, int]] = None,
                            label_colors: Dict[str, Tuple[float, float, float]] = None) -> np.ndarray:
     """Create colored overlay for semantic masks."""

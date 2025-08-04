@@ -69,7 +69,3 @@ For the majority of the fungi observations, we curated a wide range of accompany
 - <b>Image captions</b>, each image got a MOLMO-8B 
 
 **All that metadata is integral to advancing research combining visual, textual, environmental, and taxonomic information.**
-
-
-
-

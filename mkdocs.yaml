@@ -37,6 +37,7 @@ nav:
       - Segmentation Masks: data/masks.md
   - Benchmarks:
       - Overview: benchmarks.md
+      - FungiCLEF 2025: benchmarks/FungiCLEF2025.md
       - Closed-set Classification: benchmarks/closed.md
       - Open-set Classification: benchmarks/open.md
       - Few-shot Learning: benchmarks/few_shot.md

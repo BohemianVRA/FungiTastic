@@ -56,10 +56,12 @@
   
     
     
+      
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="brown" data-md-color-accent="lime">
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="brown" data-md-color-accent="lime">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -68,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fungitastic" class="md-skip">
+        <a href="#welcome-to-fungitastic" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +114,33 @@
     </div>
     
       
+        <form class="md-header__option" data-md-component="palette">
+  
     
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="brown" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="brown" data-md-color-accent="lime"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -274,9 +302,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#highlights" class="md-nav__link">
+  <a href="#key-resources" class="md-nav__link">
     <span class="md-ellipsis">
-      Highlights
+      🔎 Key Resources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏞️ Dataset Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-you-do-with-fungitastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧑‍🔬 What Can You Do With FungiTastic?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-subsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      📚 Dataset Subsets
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#downloading-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      💾 Downloading the Data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-involved" class="md-nav__link">
+    <span class="md-ellipsis">
+      📣 Get Involved
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#citation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Citation
     </span>
   </a>
   
@@ -1002,9 +1084,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#highlights" class="md-nav__link">
+  <a href="#key-resources" class="md-nav__link">
     <span class="md-ellipsis">
-      Highlights
+      🔎 Key Resources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      🏞️ Dataset Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-can-you-do-with-fungitastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      🧑‍🔬 What Can You Do With FungiTastic?
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataset-subsets" class="md-nav__link">
+    <span class="md-ellipsis">
+      📚 Dataset Subsets
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#downloading-the-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      💾 Downloading the Data
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-involved" class="md-nav__link">
+    <span class="md-ellipsis">
+      📣 Get Involved
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#citation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Citation
     </span>
   </a>
   
@@ -1030,34 +1166,115 @@
 
 
 <p align="center">
-  <a href="https://github.com/bohemianvra/FungiTastic/issues"><img src="https://img.shields.io/github/issues/bohemianvra/FungiTastic" alt="GitHub issues"></a>
-  <a href="https://github.com/bohemianvra/FungiTastic/pulls"><img src="https://img.shields.io/github/issues-pr/bohemianvra/FungiTastic" alt="GitHub pull requests"></a>
-  <a href="https://github.com/bohemianvra/FungiTastic/graphs/contributors"><img src="https://img.shields.io/github/contributors/bohemianvra/FungiTastic" alt="GitHub contributors"></a>
-  <a href="https://github.com/bohemianvra/FungiTastic/network/members"><img src="https://img.shields.io/github/forks/bohemianvra/FungiTastic" alt="GitHub forks"></a>
-  <a href="https://github.com/bohemianvra/FungiTastic/stargazers"><img src="https://img.shields.io/github/stars/bohemianvra/FungiTastic" alt="GitHub stars"></a>
-  <a href="https://github.com/bohemianvra/FungiTastic/watchers"><img src="https://img.shields.io/github/watchers/bohemianvra/FungiTastic" alt="GitHub watchers"></a>
+  <img src="banner.png" alt="FungiTastic" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/bohemianvra/FungiTastic"><img src="https://img.shields.io/github/stars/bohemianvra/FungiTastic" alt="Stars"></a>
+  <a href="https://github.com/bohemianvra/FungiTastic/issues"><img src="https://img.shields.io/github/issues/bohemianvra/FungiTastic" alt="Issues"></a>
+  <a href="https://github.com/bohemianvra/FungiTastic/pulls"><img src="https://img.shields.io/github/issues-pr/bohemianvra/FungiTastic" alt="Pull Requests"></a>
   <a href="https://github.com/bohemianvra/FungiTastic/blob/main/LICENSE"><img src="https://img.shields.io/github/license/bohemianvra/FungiTastic" alt="License"></a>
 </p>
 
-<div align="center">
-  <img src="banner.png" alt="FungiTastic" >
-
-  <a href="https://github.com/bohemianvra/FungiTastic/issues/new?assignees=aerodynamic-sauce-pan&labels=bug&projects=&template=bug_report.md&title=%5BBUG%5D">Report Bug</a>
-  ·
-  <a href="https://github.com/bohemianvra/FungiTastic/issues/new?assignees=aerodynamic-sauce-pan&labels=enhancement&projects=&template=enhancement.md&title=%5BEnhancement%5D">Request Feature</a>
-</div>
-
+<h1 id="welcome-to-fungitastic">🍄 Welcome to FungiTastic!</h1>
+<p><strong>FungiTastic</strong> is a large-scale, expert-verified, multi-modal dataset and toolkit for benchmarking and research in wild fungi recognition, discovery, and biodiversity.<br />
+Whether you’re here to push the limits of vision models, explore new multi-modal learning, or build better biodiversity tools, you’re in the right place!</p>
 <hr />
-<h1 id="fungitastic">FungiTastic 🧫🍄</h1>
-<p><code>FungiTastic</code> is a Python toolkit designed for fungal image understanding, supporting tasks such as training classifiers, extracting features, computing similarities, and performing image retrieval or evaluation. It is designed to work with various fungal datasets and enables reproducible research in fungal taxonomy and visual recognition.</p>
-<h2 id="highlights">Highlights</h2>
+<h2 id="key-resources">🔎 Key Resources</h2>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Description</th>
+<th>Link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>📄 Dataset Paper</td>
+<td>CVPR 2025 (FGVC Workshop), dataset details &amp; benchmarks</td>
+<td><a href="https://arxiv.org/pdf/2408.13632">arXiv Paper (PDF)</a></td>
+</tr>
+<tr>
+<td>🧠 GitHub Repository</td>
+<td>Code, loaders, scripts, and baselines</td>
+<td><a href="https://github.com/bohemianvra/FungiTastic">FungiTastic Repo</a></td>
+</tr>
+<tr>
+<td>🚀 Starter Notebooks</td>
+<td>Baseline pipelines and scripts</td>
+<td><a href="https://www.kaggle.com/datasets/picekl/fungitastic/code">Kaggle Code Notebooks</a></td>
+</tr>
+<tr>
+<td>📦 Download Instructions</td>
+<td>How to access subsets and modalities</td>
+<td><a href="https://bohemianvra.github.io/FungiTastic/usage/download/">Download &amp; Usage Guide</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="dataset-overview">🏞️ Dataset Overview</h2>
+<p>FungiTastic is a large-scale (~350,000 observations and &gt;600,000 images), multi-modal benchmark dataset for computer vision, machine learning, and biodiversity research, centered around wild fungi observations. It offers expert-labeled data across more than 5,000 species, collected over 20+ years, and is designed to power research in fine-grained recognition, domain adaptation, multi-modal learning, open-set recognition, and more.</p>
+<p><img alt="FungiTastic Example" src="assets/Figure1-observation.png" />
+<strong>Figure1:</strong> A Fungi observation includes one or more photos [🟩] with expert-verified labels, sometimes spores, and rich contextual data: captions [🟦], metadata [🟧], geospatial [🟫], and climatic time-series [🟦]. For a subset (~70k images), body part masks [🟥] are included.</p>
+<hr />
+<h2 id="what-can-you-do-with-fungitastic">🧑‍🔬 What Can You Do With FungiTastic?</h2>
 <ul>
-<li>🔍 Support for local and global feature extraction</li>
-<li>🤝 Similarity computation for retrieval and classification</li>
-<li>🧪 Modular training, feature fusion, and evaluation pipelines</li>
-<li>📦 Ready-to-use for fungal identification and research tasks</li>
+<li><strong>Fine-grained classification</strong> (closed-set, open-set)</li>
+<li><strong>Few-shot learning</strong> and rare species recognition</li>
+<li><strong>Multi-modal and multi-task learning</strong> (mix visual, tabular, geospatial, text)</li>
+<li><strong>Domain adaptation &amp; temporal shift</strong> (yearly, seasonal, and habitat variation)</li>
+<li><strong>Vision-language modeling</strong> (rich captions)</li>
+<li><strong>Semantic/instance segmentation</strong></li>
+<li><strong>Cost-sensitive classification</strong> (e.g., edible vs. poisonous)</li>
+</ul>
+<blockquote>
+<p>See <a href="benchmarks/">Benchmarks</a> for benchmark challenges and usage.</p>
+</blockquote>
+<hr />
+<h2 id="dataset-subsets">📚 Dataset Subsets</h2>
+<ul>
+<li><strong>Full</strong>: ~346k observations, all modalities — <em>benchmark for classification and discovery</em></li>
+<li><strong>Mini (FungiTastic–M)</strong>: Focused on 6 genera, ~70k images with masks — <em>fast prototyping, segmentation, few-shot</em></li>
+<li><strong>Few-shot (FungiTastic–FS)</strong>: Species with &lt;5 training samples — <em>test few-shot models &amp; rare class learning</em></li>
+</ul>
+<blockquote>
+<p>Full subset details and statistics in <a href="dataset/">Dataset</a>.</p>
+</blockquote>
+<hr />
+<h2 id="downloading-the-data">💾 Downloading the Data</h2>
+<p><strong>Two options:</strong></p>
+<ol>
+<li><strong>Kaggle download</strong>: Contains the majority of the data and images in 500px image resolution (~50GB)</li>
+<li><strong>Download script (recommended):</strong><br />
+   Download only what you need (by subset, modality, or resolution).
+   <div class="highlight"><pre><span></span><code>git clone https://github.com/bohemianvra/FungiTastic.git
+cd FungiTastic/dataset
+python download.py --metadata --images --subset &quot;m&quot; --size &quot;300&quot; --save_path &quot;./&quot;
+</code></pre></div>
+   See the <a href="usage/download/">Download Guide</a> for all options.</li>
+</ol>
+<hr />
+<h2 id="get-involved">📣 Get Involved</h2>
+<ul>
+<li><strong>Issues or help?</strong> <a href="https://github.com/bohemianvra/FungiTastic/issues">Open an Issue</a></li>
+<li><strong>Request a feature</strong> or <strong>contribute</strong>? Fork &amp; PR!</li>
+</ul>
+<h2 id="citation">Citation</h2>
+<ul>
+<li>When used, please use the following reference.
+  <div class="highlight"><pre><span></span><code>@InProceedings{Picek_2025_CVPR,
+    author    = {Picek, Lukas and Janouskova, Klara and Cermak, Vojtech and Matas, Jiri},
+    title     = {FungiTastic: A Multi-Modal Dataset and Benchmark for Image Categorization},
+    booktitle = {Proceedings of the Computer Vision and Pattern Recognition Conference (CVPR) Workshops},
+    month     = {June},
+    year      = {2025},
+    pages     = {2046-2056}
+}
+</code></pre></div></li>
 </ul>
 <hr />
+<p><em>Enjoy!</em> 🍄</p>
 
 
 

@@ -298,6 +298,5 @@ if __name__ == '__main__':
     # print the number of valid combinations
     print(f"Number of valid combinations: {len(valid_combinations)}")
     # number of .csv files in the metadata folder and any subfolders
-    import glob
     csv_filenames = glob.glob(os.path.join(cfg.data_path, 'metadata', '**', '*.csv'), recursive=True)
     print(f"Number of .csv files: {len(csv_filenames)}")

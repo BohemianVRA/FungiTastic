@@ -221,7 +221,9 @@ class FungiTastic(ImageDataset):
 
         subfolder_str = f'FungiTastic-{data_subset}' if data_subset != 'all' else 'FungiTastic'
         data_subset_str = f'-{data_subset}' if data_subset != 'all' else ''
-        task_str = f'-{FungiTastic.TASK2STR[task]}' if (data_subset == 'all' and split not in ['train', 'dna']) else ''
+        # Derive whether to include task_str from SUBSET_SPLIT2TASKS mapping
+        tasks_for_split = FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split]
+        task_str = f'-{FungiTastic.TASK2STR[task]}' if len(tasks_for_split) > 1 else ''
 
         df_path = os.path.join(
             data_path,

@@ -36,13 +36,25 @@ class FungiTastic(ImageDataset):
     SUBSET2TASKS: Dict[str, List[str]] = {
         'all': ['open', 'closed'],
         'FewShot': ['closed'],
-        'Mini': ['open', 'closed'],
+        'Mini': ['closed'],
     }
+    
+    # Note: These are subset-level task availability. For split-specific task constraints,
+    # see SPLIT2TASKS below.
 
+    # DNA split only supports closed set tasks
     SUBSET2SPLITS: Dict[str, List[str]] = {
         'all': ['train', 'val', 'test', 'dna'],
         'FewShot': ['train', 'val', 'test'],
         'Mini': ['train', 'val', 'test', 'dna'],
+    }
+
+    # Define which splits support which tasks
+    SPLIT2TASKS: Dict[str, List[str]] = {
+        'train': ['open', 'closed'],
+        'val': ['open', 'closed'],
+        'test': ['open', 'closed'],
+        'dna': ['closed'],  # DNA only supports closed set
     }
 
     SPLIT2STR: Dict[str, str] = {
@@ -55,6 +67,26 @@ class FungiTastic(ImageDataset):
     TASK2STR: Dict[str, str] = {
         'open': 'OpenSet',
         'closed': 'ClosedSet',
+    }
+
+    SUBSET_SPLIT2TASKS: Dict[str, Dict[str, List[str]]] = {
+        'all': {
+            'train': ['closed'],
+            'val': ['open', 'closed'],
+            'test': ['open', 'closed'],
+            'dna': ['closed'],
+        },
+        'FewShot': {
+            'train': ['closed'],
+            'val': ['closed'],
+            'test': ['closed'],
+        },
+        'Mini': {
+            'train': ['closed'],
+            'val': ['closed'],
+            'test': ['closed'],
+            'dna': ['closed'],
+        },
     }
 
     SUBSETS = SUBSET2SIZES.keys()
@@ -138,12 +170,38 @@ class FungiTastic(ImageDataset):
                          'dna'], f"Invalid split: {split}. Available splits are: ['train', 'val', 'test', 'dna']"
         assert size in FungiTastic.SUBSET2SIZES[data_subset], (f"Invalid size: {size}. Available sizes for subset "
                                                                f"{data_subset} are: {FungiTastic.SUBSET2SIZES[data_subset]}")
-        assert task in FungiTastic.SUBSET2TASKS[data_subset], (f"Invalid task: {task}. Available tasks for subset "
-                                                               f"{data_subset} are: {FungiTastic.SUBSET2TASKS[data_subset]}")
         assert split in FungiTastic.SUBSET2SPLITS[data_subset], (f"Invalid split: {split}. Available splits for subset "
                                                                  f"{data_subset} are: {FungiTastic.SUBSET2SPLITS[data_subset]}")
-        assert not (task == 'open' and split == 'dna'), "Open set task is not available for DNA split"
+        assert task in FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split], (f"Invalid task '{task}' for split '{split}'. "
+                                                                            f"Available tasks for split '{split}' are: {FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split]}")
 
+    
+    @staticmethod
+    def get_valid_meta_combinations(data_subset: str = None) -> List[Dict[str, str]]:
+        """
+        Get all valid combinations of dataset parameters.
+        
+        Args:
+            data_subset (str, optional): Specific subset to get combinations for. 
+                                       If None, returns combinations for all subsets.
+            
+        Returns:
+            List[Dict[str, str]]: List of valid parameter combinations.
+        """
+        combinations = []
+        subsets = [data_subset] if data_subset else FungiTastic.SUBSETS
+        
+        for subset in subsets:
+            for split in FungiTastic.SUBSET2SPLITS[subset]:
+                for task in FungiTastic.SUBSET_SPLIT2TASKS[subset][split]:
+                    combinations.append({
+                        'data_subset': subset,
+                        'split': split,
+                        'task': task
+                    })
+        
+        return combinations
+    
     @staticmethod
     def get_df(data_path: str, split: str = 'val', task: str = 'closed', size: str = '300',
                data_subset: str = 'Mini') -> pd.DataFrame:
@@ -164,7 +222,7 @@ class FungiTastic(ImageDataset):
 
         subfolder_str = f'FungiTastic-{data_subset}' if data_subset != 'all' else 'FungiTastic'
         data_subset_str = f'-{data_subset}' if data_subset != 'all' else ''
-        task_str = f'-{FungiTastic.TASK2STR[task]}' if (data_subset != 'FewShot' and split != 'train') else ''
+        task_str = f'-{FungiTastic.TASK2STR[task]}' if (data_subset == 'all' and split not in ['train', 'dna']) else ''
 
         df_path = os.path.join(
             data_path,
@@ -206,11 +264,6 @@ class FungiTastic(ImageDataset):
 
 
 if __name__ == '__main__':
-    # Use LaTeX-like font for paper visualization if needed and LaTeX is installed
-    if False:  # Change to True if you want LaTeX-like font
-        plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
-
     with open('../config/path.yaml', "r") as f:
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
@@ -224,3 +277,26 @@ if __name__ == '__main__':
         transform=None,
     )
     dataset.show_sample(1)
+
+    # iterate over all possible datasets and make sure we can initialize them
+    valid_combinations = FungiTastic.get_valid_meta_combinations()
+    for combo in valid_combinations:
+        try:
+            dataset = FungiTastic(
+                root=cfg.data_path,
+                split=combo['split'],
+                task=combo['task'],
+                data_subset=combo['data_subset'],
+                transform=None,
+            )
+            print(f"Initialized dataset for {combo['data_subset']} {combo['split']} {combo['task']}")
+        except Exception as e:
+            print(f"Failed to initialize dataset for {combo['data_subset']} {combo['split']} {combo['task']}: {e}")
+
+
+    # print the number of valid combinations
+    print(f"Number of valid combinations: {len(valid_combinations)}")
+    # number of .csv files in the metadata folder and any subfolders
+    import glob
+    csv_filenames = glob.glob(os.path.join(cfg.data_path, 'metadata', '**', '*.csv'), recursive=True)
+    print(f"Number of .csv files: {len(csv_filenames)}")

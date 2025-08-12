@@ -55,6 +55,7 @@ class FungiTastic(ImageDataset):
         'val': ['open', 'closed'],
         'test': ['open', 'closed'],
         'dna': ['closed'],  # DNA only supports closed set
+    }
 
     SPLIT2STR: Dict[str, str] = {
         'train': 'Train',

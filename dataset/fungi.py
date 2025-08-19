@@ -11,6 +11,7 @@ import yaml
 from fgvc.datasets import ImageDataset
 # Use seaborn style for better visualization
 from matplotlib import style
+import glob
 
 style.use("seaborn-v0_8-whitegrid")
 
@@ -33,28 +34,10 @@ class FungiTastic(ImageDataset):
         'Mini': ['300', '500', '720', 'fullsize'],
     }
 
-    SUBSET2TASKS: Dict[str, List[str]] = {
-        'all': ['open', 'closed'],
-        'FewShot': ['closed'],
-        'Mini': ['closed'],
-    }
-    
-    # Note: These are subset-level task availability. For split-specific task constraints,
-    # see SPLIT2TASKS below.
-
-    # DNA split only supports closed set tasks
     SUBSET2SPLITS: Dict[str, List[str]] = {
         'all': ['train', 'val', 'test', 'dna'],
         'FewShot': ['train', 'val', 'test'],
         'Mini': ['train', 'val', 'test', 'dna'],
-    }
-
-    # Define which splits support which tasks
-    SPLIT2TASKS: Dict[str, List[str]] = {
-        'train': ['open', 'closed'],
-        'val': ['open', 'closed'],
-        'test': ['open', 'closed'],
-        'dna': ['closed'],  # DNA only supports closed set
     }
 
     SPLIT2STR: Dict[str, str] = {
@@ -109,18 +92,17 @@ class FungiTastic(ImageDataset):
         self.task = task
         self.img_root = root
 
-        if split in ['train', 'val']:
-            assert "category_id" in df
-            category_id2label = df.groupby('category_id')['species'].unique().to_dict()
-            unknown_species = list(category_id2label.get(-1, []))
-            self.unkwnown_id = -1
-            self.category_id2label = {k: v[0] for k, v in category_id2label.items()}
-            self.label2category_id = {v: k for k, v in self.category_id2label.items()}
-            category_id2label[self.unkwnown_id] = unknown_species
-            for unk_spec in unknown_species:
-                self.label2category_id[unk_spec] = self.unkwnown_id
+        assert "category_id" in df
+        category_id2label = df.groupby('category_id')['species'].unique().to_dict()
+        unknown_species = list(category_id2label.get(-1, []))
+        self.unkwnown_id = -1
+        self.category_id2label = {k: v[0] for k, v in category_id2label.items()}
+        self.label2category_id = {v: k for k, v in self.category_id2label.items()}
+        category_id2label[self.unkwnown_id] = unknown_species
+        for unk_spec in unknown_species:
+            self.label2category_id[unk_spec] = self.unkwnown_id
 
-            self.n_classes = len(self.df['category_id'].unique())
+        self.n_classes = len(self.df['category_id'].unique())
 
     def get_class_id(self, idx: int) -> int:
         """
@@ -144,12 +126,7 @@ class FungiTastic(ImageDataset):
         Returns:
             Tuple[torch.Tensor, Optional[int], str]: Image tensor, class ID, and file path.
         """
-        if self.split in ['train', 'val']:
-            return super().__getitem__(idx)
-        else:
-            image, file_path = self.get_image(idx)
-            image = self.apply_transforms(image)
-            return image, None, file_path
+        return super().__getitem__(idx)
 
     @staticmethod
     def check_params(data_subset: str, split: str, size: str, task: str) -> None:
@@ -266,26 +243,26 @@ class FungiTastic(ImageDataset):
 
 
 if __name__ == '__main__':
-    with open('../config/path.yaml', "r") as f:
-        cfg = yaml.safe_load(f)
-    cfg = SimpleNamespace(**cfg)
+    # with open('../config/path.yaml', "r") as f:
+    #     cfg = yaml.safe_load(f)
+    # cfg = SimpleNamespace(**cfg)
 
-    dataset = FungiTastic(
-        root=cfg.data_path,
-        split='val',
-        size='300',
-        task='closed',
-        data_subset='Mini',
-        transform=None,
-    )
-    dataset.show_sample(1)
+    # dataset = FungiTastic(
+    #     root=cfg.data_path,
+    #     split='val',
+    #     size='300',
+    #     task='closed',
+    #     data_subset='Mini',
+    #     transform=None,
+    # )
+    # dataset.show_sample(1)
 
     # iterate over all possible datasets and make sure we can initialize them
     valid_combinations = FungiTastic.get_valid_meta_combinations()
     for combo in valid_combinations:
         try:
             dataset = FungiTastic(
-                root=cfg.data_path,
+                root='/Users/panda/Downloads',
                 split=combo['split'],
                 task=combo['task'],
                 data_subset=combo['data_subset'],
@@ -299,5 +276,5 @@ if __name__ == '__main__':
     # print the number of valid combinations
     print(f"Number of valid combinations: {len(valid_combinations)}")
     # number of .csv files in the metadata folder and any subfolders
-    csv_filenames = glob.glob(os.path.join(cfg.data_path, 'metadata', '**', '*.csv'), recursive=True)
+    csv_filenames = glob.glob(os.path.join('/Users/panda/Downloads', 'metadata', '**', '*.csv'), recursive=True)
     print(f"Number of .csv files: {len(csv_filenames)}")

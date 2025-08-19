@@ -11,19 +11,20 @@
 
 # 🍄 Welcome to FungiTastic!
 
-**FungiTastic** is a large-scale, expert-verified, multi-modal dataset and toolkit for benchmarking and research in wild fungi recognition, discovery, and biodiversity.  
-Whether you’re here to push the limits of vision models, explore new multi-modal learning, or build better biodiversity tools, you’re in the right place!
+**FungiTastic** is a large-scale, expert-verified, multi-modal dataset and toolkit for benchmarking and research in wild fungi recognition, discovery, and biodiversity monitoring.  
+Whether you’re here to push the limits of vision models, explore new multi-modal learning, or build better biodiversity monitoring tools, you’re in the right place!
 
 ---
 
 ## 🔎 Key Resources
 
-| Resource                 | Description                              | Link                                                                                                  |
-| ------------------------ | ---------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 📄 Dataset Paper         | CVPR 2025 (FGVC Workshop), dataset details & benchmarks | [arXiv Paper (PDF)](https://arxiv.org/pdf/2408.13632)                                                 |
-| 🧠 GitHub Repository     | Code, loaders, scripts, and baselines    | [FungiTastic Repo](https://github.com/bohemianvra/FungiTastic)                                        |
-| 🚀 Starter Notebooks     | Baseline pipelines and scripts           | [Kaggle Code Notebooks](https://www.kaggle.com/datasets/picekl/fungitastic/code)                      |
-| 📦 Download Instructions | How to access subsets and modalities     | [Download & Usage Guide](https://bohemianvra.github.io/FungiTastic/usage/download/)                   |
+| Resource                                                       | Link                                                               |
+| -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Dataset paper (CVPR 2025, FGVC Workshop; details & benchmarks) | [arXiv PDF](https://arxiv.org/pdf/2408.13632)                      |
+| GitHub repo (code, loaders, scripts, baselines)                | [GitHub](https://github.com/bohemianvra/FungiTastic)               |
+| Starter notebooks (baseline pipelines & scripts)               | [Kaggle](https://www.kaggle.com/datasets/picekl/fungitastic/code)  |
+| Download & usage guide (subsets, modalities, instructions)     | [Guide](https://bohemianvra.github.io/FungiTastic/usage/download/) |
+
 
 ---
 

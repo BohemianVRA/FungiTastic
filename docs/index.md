@@ -59,10 +59,9 @@ and many more, with predefined benchmarks reflecting real-world challenges and u
 
 We prepare multiple dataset subset, aimed at different use cases:
 
-- **Full**: ~346k observations, all modalities — *large-scale benchmark for classification and novel class discovery*
-- **Mini (FungiTastic–M)**: Focused on 6 genera with the most common species, ~70k images with masks — *fast prototyping, segmentation*
-- **Few-shot (FungiTastic–FS)**: Species with <5 training samples — *test few-shot models & rare class learning*
-
+- **Full (FungiTastic)**: ~600k images, all modalities — *large-scale benchmark for classification and novel class discovery* 
+- **Mini (FungiTastic–M)**: Focused on 6 genera with the most common species, all ~70k images with segmentation masks — *fast prototyping, segmentation* 
+- **Few-shot (FungiTastic–FS)**: Species with <5 training samples, ~12k images — *test few-shot models & rare class learning* 
 > Full subset details and statistics in [Dataset](./dataset.md).
 
 ---

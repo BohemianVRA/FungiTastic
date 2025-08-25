@@ -2,9 +2,11 @@
 
 ## Approaches
 
-- **Classic:** Cross-entropy classifiers (CNN/ViT/BEiT)
-- **Nearest-neighbor (1-NN):** On frozen feature embeddings (CLIP, BioCLIP, DINOv2)
-- **Centroid-prototype:** Prototypical classification on embeddings
+- **Classic:** Supervised cross-entropy classifiers (CNN/ViT/BEiT)
+
+With frozen feature embeddings of foundation models (CLIP, BioCLIP, DINOv2)
+- **Nearest-neighbor (1-NN):** Standard nearest-neighbour classification with 1 NN.
+- **Centroid-prototype:** Nearest-prototype classification with mean class embeddings.
 
 ---
 

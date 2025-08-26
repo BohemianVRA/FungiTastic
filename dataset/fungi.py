@@ -1,15 +1,12 @@
-from pathlib import Path
-from typing import Tuple, Any, Dict, List, Optional, Union
-from types import SimpleNamespace
+import glob
+import os
+from typing import Dict, List, Optional, Tuple
 
-import torch
-import torchvision.transforms as T
 import matplotlib.pyplot as plt
 import pandas as pd
-import os
-import yaml
+import torch
+import torchvision.transforms as T
 from fgvc.datasets import ImageDataset
-# Use seaborn style for better visualization
 from matplotlib import style
 
 style.use("seaborn-v0_8-whitegrid")
@@ -27,46 +24,65 @@ class FungiTastic(ImageDataset):
                      'category_id', 'metaSubstrate', 'poisonous', 'elevation', 'landcover',
                      'biogeographicalRegion', 'image_path']
     """
-    SUBSET2SIZES: Dict[str, List[str]] = {
-        'all': ['300', '500'],
-        'FewShot': ['300', '500'],
-        'Mini': ['300', '500', '720', 'fullsize'],
-    }
 
-    SUBSET2TASKS: Dict[str, List[str]] = {
-        'all': ['open', 'closed'],
-        'FewShot': ['closed'],
-        'Mini': ['open', 'closed'],
+    SUBSET2SIZES: Dict[str, List[str]] = {
+        "all": ["300", "500"],
+        "FewShot": ["300", "500"],
+        "Mini": ["300", "500", "720", "fullsize"],
     }
 
     SUBSET2SPLITS: Dict[str, List[str]] = {
-        'all': ['train', 'val', 'test', 'dna'],
-        'FewShot': ['train', 'val', 'test'],
-        'Mini': ['train', 'val', 'test', 'dna'],
+        "all": ["train", "val", "test", "dna"],
+        "FewShot": ["train", "val", "test"],
+        "Mini": ["train", "val", "test", "dna"],
     }
 
     SPLIT2STR: Dict[str, str] = {
-        'train': 'Train',
-        'val': 'Val',
-        'test': 'Test',
-        'dna': 'DNA-Test'
+        "train": "Train",
+        "val": "Val",
+        "test": "Test",
+        "dna": "DNA-Test",
     }
 
     TASK2STR: Dict[str, str] = {
-        'open': 'OpenSet',
-        'closed': 'ClosedSet',
+        "open": "OpenSet",
+        "closed": "ClosedSet",
+    }
+
+    SUBSET_SPLIT2TASKS: Dict[str, Dict[str, List[str]]] = {
+        "all": {
+            "train": ["closed"],
+            "val": ["open", "closed"],
+            "test": ["open", "closed"],
+            "dna": ["closed"],
+        },
+        "FewShot": {
+            "train": ["closed"],
+            "val": ["closed"],
+            "test": ["closed"],
+        },
+        "Mini": {
+            "train": ["closed"],
+            "val": ["closed"],
+            "test": ["closed"],
+            "dna": ["closed"],
+        },
     }
 
     SUBSETS = SUBSET2SIZES.keys()
 
-    def __init__(self, root: str, data_subset: str = 'Mini', split: str = 'val', size: str = '300',
-                 task: str = 'closed', transform: T.Compose = None, **kwargs):
+    def __init__(
+        self,
+        root: str,
+        data_subset: str = "Mini",
+        split: str = "val",
+        size: str = "300",
+        task: str = "closed",
+        transform: T.Compose = None,
+        **kwargs,
+    ):
         df = self.get_df(
-            data_path=root,
-            split=split,
-            size=size,
-            task=task,
-            data_subset=data_subset
+            data_path=root, split=split, size=size, task=task, data_subset=data_subset
         )
 
         assert "image_path" in df
@@ -77,18 +93,17 @@ class FungiTastic(ImageDataset):
         self.task = task
         self.img_root = root
 
-        if split in ['train', 'val']:
-            assert "category_id" in df
-            category_id2label = df.groupby('category_id')['species'].unique().to_dict()
-            unknown_species = list(category_id2label.get(-1, []))
-            self.unkwnown_id = -1
-            self.category_id2label = {k: v[0] for k, v in category_id2label.items()}
-            self.label2category_id = {v: k for k, v in self.category_id2label.items()}
-            category_id2label[self.unkwnown_id] = unknown_species
-            for unk_spec in unknown_species:
-                self.label2category_id[unk_spec] = self.unkwnown_id
+        assert "category_id" in df
+        category_id2label = df.groupby("category_id")["species"].unique().to_dict()
+        unknown_species = list(category_id2label.get(-1, []))
+        self.unkwnown_id = -1
+        self.category_id2label = {k: v[0] for k, v in category_id2label.items()}
+        self.label2category_id = {v: k for k, v in self.category_id2label.items()}
+        category_id2label[self.unkwnown_id] = unknown_species
+        for unk_spec in unknown_species:
+            self.label2category_id[unk_spec] = self.unkwnown_id
 
-            self.n_classes = len(self.df['category_id'].unique())
+        self.n_classes = len(self.df["category_id"].unique())
 
     def get_class_id(self, idx: int) -> int:
         """
@@ -112,12 +127,7 @@ class FungiTastic(ImageDataset):
         Returns:
             Tuple[torch.Tensor, Optional[int], str]: Image tensor, class ID, and file path.
         """
-        if self.split in ['train', 'val']:
-            return super().__getitem__(idx)
-        else:
-            image, file_path = self.get_image(idx)
-            image = self.apply_transforms(image)
-            return image, None, file_path
+        return super().__getitem__(idx)
 
     @staticmethod
     def check_params(data_subset: str, split: str, size: str, task: str) -> None:
@@ -133,20 +143,60 @@ class FungiTastic(ImageDataset):
         Raises:
             AssertionError: If any parameter is invalid.
         """
-        assert data_subset in FungiTastic.SUBSETS, f"Invalid subset: {data_subset}. Available subsets are: {FungiTastic.SUBSETS}"
-        assert split in ['train', 'val', 'test',
-                         'dna'], f"Invalid split: {split}. Available splits are: ['train', 'val', 'test', 'dna']"
-        assert size in FungiTastic.SUBSET2SIZES[data_subset], (f"Invalid size: {size}. Available sizes for subset "
-                                                               f"{data_subset} are: {FungiTastic.SUBSET2SIZES[data_subset]}")
-        assert task in FungiTastic.SUBSET2TASKS[data_subset], (f"Invalid task: {task}. Available tasks for subset "
-                                                               f"{data_subset} are: {FungiTastic.SUBSET2TASKS[data_subset]}")
-        assert split in FungiTastic.SUBSET2SPLITS[data_subset], (f"Invalid split: {split}. Available splits for subset "
-                                                                 f"{data_subset} are: {FungiTastic.SUBSET2SPLITS[data_subset]}")
-        assert not (task == 'open' and split == 'dna'), "Open set task is not available for DNA split"
+        assert (
+            data_subset in FungiTastic.SUBSETS
+        ), f"Invalid subset: {data_subset}. Available subsets are: {FungiTastic.SUBSETS}"
+        assert split in [
+            "train",
+            "val",
+            "test",
+            "dna",
+        ], f"Invalid split: {split}. Available splits are: ['train', 'val', 'test', 'dna']"
+        assert size in FungiTastic.SUBSET2SIZES[data_subset], (
+            f"Invalid size: {size}. Available sizes for subset "
+            f"{data_subset} are: {FungiTastic.SUBSET2SIZES[data_subset]}"
+        )
+        assert split in FungiTastic.SUBSET2SPLITS[data_subset], (
+            f"Invalid split: {split}. Available splits for subset "
+            f"{data_subset} are: {FungiTastic.SUBSET2SPLITS[data_subset]}"
+        )
+        assert task in FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split], (
+            f"Invalid task '{task}' for split '{split}'. "
+            f"Available tasks for split '{split}' are: {FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split]}"
+        )
 
     @staticmethod
-    def get_df(data_path: str, split: str = 'val', task: str = 'closed', size: str = '300',
-               data_subset: str = 'Mini') -> pd.DataFrame:
+    def get_valid_meta_combinations(data_subset: str = None) -> List[Dict[str, str]]:
+        """
+        Get all valid combinations of dataset parameters.
+
+        Args:
+            data_subset (str, optional): Specific subset to get combinations for.
+                                       If None, returns combinations for all subsets.
+
+        Returns:
+            List[Dict[str, str]]: List of valid parameter combinations.
+        """
+        combinations = []
+        subsets = [data_subset] if data_subset else FungiTastic.SUBSETS
+
+        for subset in subsets:
+            for split in FungiTastic.SUBSET2SPLITS[subset]:
+                for task in FungiTastic.SUBSET_SPLIT2TASKS[subset][split]:
+                    combinations.append(
+                        {"data_subset": subset, "split": split, "task": task}
+                    )
+
+        return combinations
+
+    @staticmethod
+    def get_df(
+        data_path: str,
+        split: str = "val",
+        task: str = "closed",
+        size: str = "300",
+        data_subset: str = "Mini",
+    ) -> pd.DataFrame:
         """
         Get the dataframe for the specified dataset parameters.
 
@@ -162,9 +212,13 @@ class FungiTastic(ImageDataset):
         """
         FungiTastic.check_params(data_subset, split, size, task)
 
-        subfolder_str = f'FungiTastic-{data_subset}' if data_subset != 'all' else 'FungiTastic'
-        data_subset_str = f'-{data_subset}' if data_subset != 'all' else ''
-        task_str = f'-{FungiTastic.TASK2STR[task]}' if (data_subset != 'FewShot' and split != 'train') else ''
+        subfolder_str = (
+            f"FungiTastic-{data_subset}" if data_subset != "all" else "FungiTastic"
+        )
+        data_subset_str = f"-{data_subset}" if data_subset != "all" else ""
+        # Derive whether to include task_str from SUBSET_SPLIT2TASKS mapping
+        tasks_for_split = FungiTastic.SUBSET_SPLIT2TASKS[data_subset][split]
+        task_str = f"-{FungiTastic.TASK2STR[task]}" if len(tasks_for_split) > 1 else ""
 
         df_path = os.path.join(
             data_path,
@@ -174,7 +228,7 @@ class FungiTastic(ImageDataset):
         )
         df = pd.read_csv(df_path)
         df["image_path"] = df.filename.apply(
-            lambda x: os.path.join(data_path, subfolder_str, split, f'{size}p', x)
+            lambda x: os.path.join(data_path, subfolder_str, split, f"{size}p", x)
         )
         return df
 
@@ -186,10 +240,12 @@ class FungiTastic(ImageDataset):
             idx (int): Index of the sample to display.
         """
         image, category_id, file_path = self.__getitem__(idx)
-        class_name = self.category_id2label[category_id] if category_id is not None else '[TEST]'
+        class_name = (
+            self.category_id2label[category_id] if category_id is not None else "[TEST]"
+        )
         plt.imshow(image)
         plt.title(f"Class: {class_name}; id: {idx}")
-        plt.axis('off')
+        plt.axis("off")
         plt.show()
 
     def get_category_idxs(self, category_id: int) -> List[int]:
@@ -205,22 +261,86 @@ class FungiTastic(ImageDataset):
         return self.df[self.df.category_id == category_id].index.tolist()
 
 
-if __name__ == '__main__':
-    # Use LaTeX-like font for paper visualization if needed and LaTeX is installed
-    if False:  # Change to True if you want LaTeX-like font
-        plt.rc('text', usetex=True)
-    plt.rc('font', family='serif')
+if __name__ == "__main__":
+    """
+    Main execution entry point for FungiTastic dataset validation and exploration.
 
-    with open('../config/path.yaml', "r") as f:
-        cfg = yaml.safe_load(f)
-    cfg = SimpleNamespace(**cfg)
+    What this script does when executed directly:
+        1. Optionally load dataset path from a YAML config file (currently commented out).
+        2. Enumerate all valid dataset parameter combinations via
+           `FungiTastic.get_valid_meta_combinations()`.
+        3. Attempt to initialize the dataset for each valid combination:
+            * On success: prints a confirmation message.
+            * On failure: prints the exception message for debugging.
+        4. Print the total number of valid parameter combinations.
+        5. Count and print the number of CSV metadata files found in the
+           dataset's `metadata/` folder (including subfolders).
 
-    dataset = FungiTastic(
-        root=cfg.data_path,
-        split='val',
-        size='300',
-        task='closed',
-        data_subset='Mini',
-        transform=None,
+    Expected dataset structure:
+        root/
+            metadata/
+                FungiTastic-Mini/
+                    FungiTastic-Mini-ClosedSet-Train.csv
+                    ...
+                FungiTastic-all/
+                    ...
+            FungiTastic-Mini/
+                train/300p/*.jpg
+                val/300p/*.jpg
+                test/300p/*.jpg
+                ...
+            FungiTastic/
+                ...
+
+    Example: Running the script
+        $ python fungitastic.py
+
+    Example: Using the dataset class interactively
+        >>> from fungitastic import FungiTastic
+        >>> dataset = FungiTastic(
+        ...     root='/path/to/dataset',
+        ...     split='val',
+        ...     size='300',
+        ...     task='closed',
+        ...     data_subset='Mini',
+        ... )
+        >>> print(len(dataset))
+        1234
+        >>> image, label, path = dataset[42]
+        >>> dataset.show_sample(42)
+
+    Notes:
+        - Valid subsets are: all, FewShot, Mini
+        - Valid splits depend on subset:
+            * all: [train, val, test, dna]
+            * FewShot: [train, val, test]
+            * Mini: [train, val, test, dna]
+        - Valid tasks: closed (always), open (sometimes for val/test)
+    """
+
+    valid_combinations = FungiTastic.get_valid_meta_combinations()
+    for combo in valid_combinations:
+        try:
+            dataset = FungiTastic(
+                root="/Users/panda/Downloads",
+                split=combo["split"],
+                task=combo["task"],
+                data_subset=combo["data_subset"],
+                transform=None,
+            )
+            print(
+                f"Initialized dataset for {combo['data_subset']} {combo['split']} {combo['task']}"
+            )
+        except Exception as e:
+            print(
+                f"Failed to initialize dataset for {combo['data_subset']} {combo['split']} {combo['task']}: {e}"
+            )
+
+    # print the number of valid combinations
+    print(f"Number of valid combinations: {len(valid_combinations)}")
+    # number of .csv files in the metadata folder and any subfolders
+    csv_filenames = glob.glob(
+        os.path.join("/Users/panda/Downloads", "metadata", "**", "*.csv"),
+        recursive=True,
     )
-    dataset.show_sample(1)
+    print(f"Number of .csv files: {len(csv_filenames)}")

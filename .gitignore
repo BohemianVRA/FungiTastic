@@ -150,9 +150,10 @@ data/
 **/private.yaml
 
 #  internal scripts
-scripts/baselines/segmentation/eval.py
+scripts/baselines/segmentation/config/seg_local.yaml
 scripts/baselines/few_shot/analyze.py
 
 # output directories
 **/out/
+**/ckpts/
 

@@ -21,6 +21,11 @@ from dataset.utils.mask_vis import (
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+SPLIT2STR = {
+    'val': 'Validation',
+    'train': 'Train',
+}
+
 
 class MaskFungiTastic(FungiTastic):
     def __init__(self, root: str, data_subset: str = 'Mini', split: str = 'val', size: str = '300',
@@ -54,7 +59,7 @@ class MaskFungiTastic(FungiTastic):
         
         self.seg_task = seg_task
         self.debug = debug
-        split_str = 'Validation' if split == 'val' else 'Train'
+        split_str = SPLIT2STR[split]
         
         # Load multiple semantic segmentation masks per image
         gt_masks = pd.read_parquet(os.path.join(root, 'masks', f'FungiTastic-Mini-{split_str}Masks.parquet'))

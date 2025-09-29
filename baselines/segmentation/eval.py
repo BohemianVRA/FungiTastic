@@ -19,11 +19,12 @@ from dataset.mask_fungi import MaskFungiTastic
 import torch
 
 from torchmetrics.functional import jaccard_index
+from baselines.segmentation.generate_masks import im2mask_path
 
 
 def evaluate_single_image(idx, dataset, masks_path, thresh, vis):
     image, gt_masks, class_id, file_path, label_data = dataset[idx]
-    mask_path = os.path.join(masks_path, os.path.basename(file_path))
+    mask_path = im2mask_path(file_path, masks_path, dataset.img_root)
     pred_mask = Image.open(mask_path)
 
     # resize pred_mask to gt_mask size
@@ -70,7 +71,6 @@ def evaluate_saved_masks(
     thresh=0.5,
     result_dir=None,
     chunk_size=10,
-    show_mask=False,
     parallel=False
 ):
     ious = []
@@ -85,15 +85,12 @@ def evaluate_saved_masks(
                     ious.append(future.result())
     else:
         for idx in tqdm(idxs):
-        # for idx in tqdm(idxs[:20]):
             iou = evaluate_single_image(idx, dataset, masks_path, thresh, vis)
             ious.append(iou)
 
     ious = np.array(ious)
     iou_all = ious.mean()
     print(f"IoU: {iou_all}")
-
-    # exit()
 
     if result_dir is not None:
         result_dir.mkdir(parents=True, exist_ok=True)
@@ -136,7 +133,6 @@ def main():
 
     evaluate_saved_masks(
         dataset=dataset,
-        # precomputed segmentation masks - TODO verify path, maybe further subpath needs to be added, ie 'FungiTastic'
         masks_path=os.path.join(cfg.mask_path),
         result_dir=result_dir,
         vis=False,

@@ -1,4 +1,5 @@
 import os
+import argparse
 from pathlib import Path
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -55,7 +56,7 @@ def evaluate_single_image(idx, dataset, masks_path, thresh, vis):
         plt.axis('off')
         plt.subplot(1, 3, 3)
         plt.imshow(pred_mask)
-        plt.title(f"Pred Mask")
+        plt.title("Pred Mask")
         plt.axis('off')
         plt.suptitle(f"ID: {idx}; IoU: {iou}")
         plt.show()
@@ -112,17 +113,20 @@ def evaluate_saved_masks(
     plt.show()
 
 def main():
-    split = 'val'
-    with open(os.path.join(SCRIPT_DIR, 'config/seg.yaml'), "r") as f:
-    # with open('config/seg.yaml', "r") as f:
+    parser = argparse.ArgumentParser(description='Evaluation')
+    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, 'config/seg.yaml'),  
+                        help='Path to the config file',)
+    args = parser.parse_args()
+
+    with open(args.config_path, "r") as f:
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
-    result_dir = Path(cfg.path_out) / 'results' / 'seg' / split
+    result_dir = Path(cfg.path_out) / 'results' / 'seg' / cfg.split
 
     dataset = MaskFungiTastic(
         root=cfg.data_path,
-        split=split,
+        split=cfg.split,
         size='300',
         task='closed',
         data_subset='Mini',

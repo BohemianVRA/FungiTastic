@@ -1,43 +1,44 @@
 <p align="center">
-  <img src="banner.png" alt="FungiTastic" width="100%">
-</p>
-
-<p align="center">
   <a href="https://github.com/bohemianvra/FungiTastic"><img src="https://img.shields.io/github/stars/bohemianvra/FungiTastic" alt="Stars"></a>
   <a href="https://github.com/bohemianvra/FungiTastic/issues"><img src="https://img.shields.io/github/issues/bohemianvra/FungiTastic" alt="Issues"></a>
   <a href="https://github.com/bohemianvra/FungiTastic/pulls"><img src="https://img.shields.io/github/issues-pr/bohemianvra/FungiTastic" alt="Pull Requests"></a>
   <a href="https://github.com/bohemianvra/FungiTastic/blob/main/LICENSE"><img src="https://img.shields.io/github/license/bohemianvra/FungiTastic" alt="License"></a>
 </p>
-
 # 🍄 Welcome to FungiTastic!
 
-**FungiTastic** is a large-scale, expert-verified, multi-modal dataset and toolkit for benchmarking and research in wild fungi recognition, discovery, and biodiversity monitoring.  
-Whether you’re here to push the limits of vision models, explore new multi-modal learning, or build better biodiversity monitoring tools, you’re in the right place!
+**FungiTastic** is a large-scale, expert-verified, **multi-modal benchmark** for **machine learning**.  
+It’s designed to stress-test models under realistic conditions—fine-grained classes, long tails, temporal and geographic shift, and multi-modal fusion (images, metadata, climate, etc.).
+
+The example below illustrates why this benchmark is exceptionally challenging for ML: cross-species differences can be subtle, while within a species the appearance varies widely with age, lighting, and habitat.
+
+<p align="center">
+  <img src="./assets/intra_inter.svg" alt="Intra- and inter-class visual similarity across selected fungi species" width="95%">
+</p>
+
+**Figure 1. Intra- and inter-class visual similarity.** Examples across **nine species** from **three families** show subtle cross-species differences and large within-species variation, capturing the fundamental challenge that FungiTastic offers to benchmark ML methods.
 
 ---
 
-## 🔎 Key Resources
+##  Dataset Overview
 
-| Resource                                                       | Link                                                               |
-| -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Dataset paper (CVPR 2025, FGVC Workshop; details & benchmarks) | [arXiv PDF](https://arxiv.org/pdf/2408.13632)                      |
-| GitHub repo (code, loaders, scripts, baselines)                | [GitHub](https://github.com/bohemianvra/FungiTastic)               |
-| Starter notebooks (baseline pipelines & scripts)               | [Kaggle](https://www.kaggle.com/datasets/picekl/fungitastic/code)  |
-| Download & usage guide (subsets, modalities, instructions)     | [Guide](https://bohemianvra.github.io/FungiTastic/usage/download/) |
+**FungiTastic** is a large-scale, multi-modal dataset with more than 600k images** across **~350k observations** of around **5,000+ species** collected over **20+ years**. It is purpose-built for **fine-grained recognition**, **domain adaptation**, **multi-modal learning**, **open-set / few-shot** settings, and **interpretability**.
 
+To make the dataset immediately usable for different research goals, we provide **predefined subsets** that trade off scale, difficulty, and annotation depth:
 
----
+- **Full (FungiTastic):** ~600k images with all modalities — best when you need **maximum coverage** for *closed-/open-set classification* and **novel class discovery** at scale.
+- **Mini (FungiTastic–M):** ~70k images from 6 common genera with **part segmentation masks** — ideal for **fast prototyping**, **segmentation**, and **explainable, part-aware models**.
+- **Few-shot (FungiTastic–FS):** ~12k images where species have **<5 training samples** — targeted for **few-shot** and **rare-class** learning under extreme data scarcity.
 
-## 🏞️ Dataset Overview
+> Need details, stats, or file layout? See the **[Dataset page](./dataset.md)**.
 
-FungiTastic is a large-scale (&gt;600,000 images of ~350,000 observations), multi-modal dataset for computer vision, machine learning, and biodiversity research, centered around wild fungi observations. It offers expert-labeled data across more than 5,000 species, collected over 20+ years. It is designed to power research in fine-grained recognition, domain adaptation, multi-modal learning, open-set recognition, few-shot recognition, interpretability and more.
-
-![FungiTastic Example](assets/Figure1-observation.png)
-**Figure1:** A Fungi observation represents a real-world record of a fungus and includes one or more photos of the fungi specimen [🟩] with expert-verified labels (sometimes including images of spores) and rich contextual data: captions [🟦], metadata [🟧], geospatial [🟫], and climatic time-series [🟦]. For a subset (~70k images), ground-truth body part masks [🟥] are included.
+![FungiTastic Example](assets/observation.png)
+**Figure2:** A Fungi observation represents a real-world record of a fungus and includes one or more photos of the fungi specimen [🟩] with expert-verified labels (sometimes including images of spores) and rich contextual data: captions [🟦], metadata [🟧], geospatial [🟫], and climatic time-series [🟦]. For a subset (~70k images), ground-truth body part masks [🟥] are included.
 
 ---
 
-## 🧑‍🔬 What Can You Do With FungiTastic?
+## Use Cases?
+
+FungiTastic is built to **mirror real field conditions**: rare species, shifting seasons, noisy observations, and evolving taxonomies. With **ready-to-use splits, baselines, and multimodal inputs**, you can prototype quickly and evaluate fairly across tasks that matter in practice.
 
 - **Fine-grained classification** (closed-set, open-set)
 - **Few-shot learning** of rare species 
@@ -55,42 +56,16 @@ and many more, with predefined benchmarks reflecting real-world challenges and u
 
 ---
 
-## 📚 Dataset Subsets
+## Resources
 
-We prepare multiple dataset subset, aimed at different use cases:
-
-- **Full (FungiTastic)**: ~600k images, all modalities — *large-scale benchmark for classification and novel class discovery* 
-- **Mini (FungiTastic–M)**: Focused on 6 genera with the most common species, all ~70k images with segmentation masks — *fast prototyping, segmentation* 
-- **Few-shot (FungiTastic–FS)**: Species with <5 training samples, ~12k images — *test few-shot models & rare class learning* 
-> Full subset details and statistics in [Dataset](./dataset.md).
-
----
-
-## 💾 Downloading the Data
-
-**Two options:**
-
-
-1. **Download script (recommended):**  
-Download only what you need (by subset, modality, or resolution). 
-```
-git clone https://github.com/bohemianvra/FungiTastic.git
-cd FungiTastic/dataset
-python download.py --metadata --images --subset "m" --size "300" --save_path "./"
-```
-See the [Download Guide](./usage/download.md) for all options.
-
-2. **Kaggle download**: Contains the majority of the data and images in 500px image resolution (~50GB).
-You need to download the whole dataset when using the Kaggle API.
+| Resource             | Description                             | Link                                                                                                  |
+|----------------------| --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 📄 Publication       | CVPR 2025 (FGVC Workshop) | [arXiv Paper (PDF)](https://arxiv.org/pdf/2408.13632)                                                 |
+| 🧠 GitHub Repository | Code, loaders, scripts, and baselines   | [FungiTastic Repo](https://github.com/bohemianvra/FungiTastic)                                        |
+| 🚀 Starter Notebooks | Baseline pipelines and scripts          | [Kaggle Code Notebooks](https://www.kaggle.com/datasets/picekl/fungitastic/code)                      |
+| 📦 Download          | How to access subsets and modalities    | [Download & Usage Guide](https://bohemianvra.github.io/FungiTastic/usage/download/)                   |
 
 ---
-
-## 📣 Get Involved
-
-If you have
-
-- **questions** or **problems?** [Open an Issue.](https://github.com/bohemianvra/FungiTastic/issues)
-- **a feature request** or **contribution**? Fork & PR!
 
 ## Citation 
 If you use FungiTastic in your research, please cite the following:

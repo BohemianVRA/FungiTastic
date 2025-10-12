@@ -9,6 +9,7 @@ import torch
 import yaml
 from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel
+from transformers import AutoImageProcessor, AutoModel
 from torchvision import transforms as tfms
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 import pandas as pd
@@ -84,29 +85,14 @@ class FeatureExtractor(torch.nn.Module):
 
 class DinoV2(FeatureExtractor):
     """Feature extractor using Facebook's DINOv2 vision transformer model."""
+    
     def __init__(self, device):
         super(DinoV2, self).__init__(device)
         self.model = None
         self.transform = self.get_transform()
 
-    def load(self, model_name='vitb14_reg'):
-        """Load DINOv2 model weights.
-        
-        Args:
-            model_name: Name of the DINOv2 model variant to load
-        """
-        if model_name == 'vitb14_reg':
-            model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
-        else:
-            raise ValueError(f'Unknown model kind: {model_name}')
-
-        model.eval()
-        model.to(self.device)
-
-        self.model = model
-
     def extract_features(self, image):
-        """Extract features from an image using DINOv2.
+        """Extract features from an image using DINOv2 model.
         
         Args:
             image: PIL Image object
@@ -128,7 +114,7 @@ class DinoV2(FeatureExtractor):
                 mean: Sequence[float] = IMAGENET_DEFAULT_MEAN,
                 std: Sequence[float] = IMAGENET_DEFAULT_STD,
         ):
-        """Get the image transformation pipeline for DINOv2.
+        """Get the image transformation pipeline for DINOv2 models.
         
         Args:
             resize_size: Size to resize images to
@@ -144,6 +130,71 @@ class DinoV2(FeatureExtractor):
             tfms.Normalize(mean=mean, std=std)
         ]
         return tfms.Compose(transforms_list)
+    
+    def load(self, model_name='vitb14_reg'):
+        """Load DINOv2 model weights.
+        
+        Args:
+            model_name: Name of the DINOv2 model variant to load
+        """
+        if model_name == 'vitb14_reg':
+            model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
+        else:
+            raise ValueError(f'Unknown DINOv2 model: {model_name}')
+
+        model.eval()
+        model.to(self.device)
+        self.model = model
+
+
+class DinoV3(FeatureExtractor):
+    """Feature extractor using Facebook's DINOv3 vision transformer model."""
+    
+    def __init__(self, device):
+        super(DinoV3, self).__init__(device)
+        self.model = None
+        self.processor = None
+    
+    def extract_features(self, image):
+        """Extract features from an image using DINOv3 model.
+        
+        Args:
+            image: PIL Image object
+            
+        Returns:
+            Normalized feature embeddings
+        """
+        if self.model is None:
+            raise ValueError('Model not loaded')
+
+        # Process image using HuggingFace processor
+        inputs = self.processor(images=image, return_tensors="pt")
+        
+        # Get features
+        with torch.no_grad():
+            outputs = self.model(**inputs.to(self.device))
+            # Extract the last hidden state (CLS token)
+            features = outputs.pooler_output
+        
+        norm_features = self.normalize_embedding(features)
+        return norm_features
+    
+    def load(self, model_name='vit7b16'):
+        """Load DINOv3 model weights.
+        
+        Args:
+            model_name: Name of the DINOv3 model variant to load
+        """
+        if model_name == 'vit7b16':
+            self.processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m")
+            model = AutoModel.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m")
+        else:
+            raise ValueError(f'Unknown DINOv3 model: {model_name}')
+
+        model.eval()
+        model.to(self.device)
+        self.model = model
+        
 
 
 class CLIP(FeatureExtractor):
@@ -228,7 +279,7 @@ def get_model(model_name):
     """Factory function to create and load the appropriate feature extractor model.
     
     Args:
-        model_name: Name of the model to load ('clip', 'dinov2', or 'bioclip')
+        model_name: Name of the model to load ('clip', 'dinov2', 'dinov3', or 'bioclip')
         
     Returns:
         Loaded and configured feature extractor model
@@ -237,6 +288,8 @@ def get_model(model_name):
         model = CLIP(device=DEVICE)
     elif model_name == 'dinov2':
         model = DinoV2(device=DEVICE)
+    elif model_name == 'dinov3':
+        model = DinoV3(device=DEVICE)
     elif model_name == 'bioclip':
         model = BioCLIP(device=DEVICE)
     else:

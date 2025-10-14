@@ -4,14 +4,14 @@ import argparse
 import os
 
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 import numpy as np
 import torch
 import yaml
 
 from dataset.feature_fungi import FeatureFungiTastic
-from scripts.baselines.few_shot.classifier import PrototypeClassifier, NNClassifier
+from baselines.few_shot.classifier import PrototypeClassifier, NNClassifier
 
 
 def get_dataloader(test_dataset, batch_size=256, num_workers=0):
@@ -73,7 +73,7 @@ def get_classifier_embeddings(dataset_train):
     return class_embeddings, empty_classes
 
 
-def test_fungi(path_out, data_path, feature_path, feature_model, classifier_name, split, debug=False):
+def test_fungi(path_out, data_path, feature_path, feature_model, feature_model_name, classifier_name, split, debug=False):
     """Evaluates a few-shot classifier on the Fungi dataset.
     
     Args:
@@ -85,8 +85,8 @@ def test_fungi(path_out, data_path, feature_path, feature_model, classifier_name
         split: Dataset split to evaluate on
         debug: If True, runs only 3 batches for quick testing
     """
-    features_file_train = os.path.join(feature_path, feature_model, "224x224_train.h5")
-    features_file_eval = os.path.join(feature_path, feature_model, f"224x224_{split}.h5")
+    features_file_train = os.path.join(feature_path, f'{feature_model}_{feature_model_name}', "224x224_train.h5")
+    features_file_eval = os.path.join(feature_path, f'{feature_model}_{feature_model_name}', f"224x224_{split}.h5")
 
     dataset_train = FeatureFungiTastic(
         root=data_path,
@@ -134,13 +134,13 @@ def main(cfg):
         cfg: Configuration object containing all necessary parameters
     """
     test_fungi(path_out=cfg.path_out, data_path=cfg.data_path, feature_path=cfg.feature_path,
-               feature_model=cfg.feature_model, classifier_name=cfg.classifier, split=cfg.split,
+               feature_model=cfg.feature_model, feature_model_name=cfg.feature_model_name, classifier_name=cfg.classifier, split=cfg.split,
                debug=cfg.debug)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluation')
-    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/few_shot/config/fs.yaml',  
+    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/FungiTastic/baselines/few_shot/config/fs_local.yaml',  
                         help='Path to the config file',)
     args = parser.parse_args()
 

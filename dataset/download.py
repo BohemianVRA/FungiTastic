@@ -78,6 +78,8 @@ class FungiTasticDownloader:
         self.fungi_path = self.save_path / "FungiTastic"
         self.fungi_path.mkdir(parents=True, exist_ok=True)
 
+        print(f"FungiTastic downloader initialized with save path: {self.save_path}")
+
     def download_file(self, url: str, tool: str = "wget") -> Path:
         """
         Downloads a zip file from a specified URL using wget or curl.

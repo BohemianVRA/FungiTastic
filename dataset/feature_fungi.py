@@ -8,6 +8,7 @@ import torchvision.transforms as T
 
 import pandas as pd
 from dataset.fungi import FungiTastic
+from types import SimpleNamespace
 
 
 class FeatureFungiTastic(FungiTastic):

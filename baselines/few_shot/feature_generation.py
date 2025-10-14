@@ -8,16 +8,16 @@ import numpy as np
 import torch
 import yaml
 from tqdm import tqdm
-from transformers import CLIPProcessor, CLIPModel
-from transformers import AutoImageProcessor, AutoModel
+from transformers import AutoImageProcessor, AutoModel, TorchAoConfig
 from torchvision import transforms as tfms
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 import pandas as pd
 from PIL import Image
 import open_clip
+from torchao.quantization import Int4WeightOnlyConfig 
 
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 
 from dataset.fungi import FungiTastic
@@ -179,20 +179,32 @@ class DinoV3(FeatureExtractor):
         norm_features = self.normalize_embedding(features)
         return norm_features
     
-    def load(self, model_name='vit7b16'):
+    def load(self, model_name='vitb'):
         """Load DINOv3 model weights.
         
         Args:
-            model_name: Name of the DINOv3 model variant to load
+            model_name: Name of the DINOv3 model variant to load ('vitb' or 'vit7b')
         """
-        if model_name == 'vit7b16':
+        if model_name == 'vitb':
+            self.processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
+            model = AutoModel.from_pretrained("facebook/dinov3-vitb16-pretrain-lvd1689m")
+        elif model_name == 'vit7b':
             self.processor = AutoImageProcessor.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m")
-            model = AutoModel.from_pretrained("facebook/dinov3-vit7b16-pretrain-lvd1689m")
+            # Use quantization for ViT-7B model
+            quant_type = Int4WeightOnlyConfig(group_size=128)
+            quantization_config = TorchAoConfig(quant_type=quant_type)
+            model = AutoModel.from_pretrained(
+                "facebook/dinov3-vit7b16-pretrain-lvd1689m",
+                dtype=torch.bfloat16,
+                device_map="auto",
+                quantization_config=quantization_config
+            )
         else:
             raise ValueError(f'Unknown DINOv3 model: {model_name}')
 
         model.eval()
-        model.to(self.device)
+        if model_name != 'vit7b':  # ViT-7B already moved to device via device_map
+            model.to(self.device)
         self.model = model
         
 
@@ -212,8 +224,8 @@ class CLIP(FeatureExtractor):
         Args:
             model_name: Name of the CLIP model variant to load
         """
-        model = CLIPModel.from_pretrained(f"openai/{model_name}")
-        processor = CLIPProcessor.from_pretrained(f"openai/{model_name}")
+        model = AutoModel.from_pretrained(f"openai/{model_name}")
+        processor = AutoImageProcessor.from_pretrained(f"openai/{model_name}")
 
         model.to(self.device)
 
@@ -275,32 +287,37 @@ class BioCLIP(CLIP):
         return norm_features
 
 
-def get_model(model_name):
+def get_model(model_name, model_variant=None):
     """Factory function to create and load the appropriate feature extractor model.
     
     Args:
         model_name: Name of the model to load ('clip', 'dinov2', 'dinov3', or 'bioclip')
+        model_variant: Specific variant of the model (e.g., 'vit7b' for DinoV3)
         
     Returns:
         Loaded and configured feature extractor model
     """
     if model_name == 'clip':
         model = CLIP(device=DEVICE)
+        model.load()
     elif model_name == 'dinov2':
         model = DinoV2(device=DEVICE)
+        model.load()
     elif model_name == 'dinov3':
         model = DinoV3(device=DEVICE)
+        variant = model_variant if model_variant else 'vitb'
+        model.load(variant)
     elif model_name == 'bioclip':
         model = BioCLIP(device=DEVICE)
+        model.load()
     else:
         raise ValueError(f'Unknown model kind: {model_name}')
 
-    model.load()
     model.eval()
     return model
 
 
-def generate_embeddings(data_path, feature_path, model_name='clip', data_split='val'):
+def generate_embeddings(data_path, feature_path, model_name='clip', data_split='val', model_variant=None):
     """Generate and save image embeddings for the FungiTastic dataset.
     
     Args:
@@ -308,8 +325,9 @@ def generate_embeddings(data_path, feature_path, model_name='clip', data_split='
         feature_path: Path where feature embeddings will be saved
         model_name: Name of the model to use for feature extraction
         data_split: Dataset split to process ('val', 'test', 'train', or 'all')
+        model_variant: Specific variant of the model (e.g., 'vit7b' for DinoV3)
     """
-    model = get_model(model_name)
+    model = get_model(model_name, model_variant)
 
     splits = [data_split] if data_split != 'all' else ['val', 'test', 'train']
 
@@ -323,10 +341,7 @@ def generate_embeddings(data_path, feature_path, model_name='clip', data_split='
             transform=None,
             )
 
-        if model_name == 'dinov2':
-            feature_folder = os.path.join(feature_path, f'{model_name}_vit_b')
-        else:
-            feature_folder = os.path.join(feature_path, model_name)
+        feature_folder = os.path.join(feature_path, f'{model_name}_{model_variant}')
 
         save_freq = -1
 
@@ -374,7 +389,7 @@ def generate_embeddings(data_path, feature_path, model_name='clip', data_split='
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate embeddings for fungi dataset')
-    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/fungi_code_public/FungiTastic/scripts/baselines/few_shot/config/fs.yaml',  
+    parser.add_argument('--config_path', type=str, default='/home.stud/janoukl1/projects/FungiTastic/baselines/few_shot/config/fs_local.yaml',  
                         help='Path to the config file',)
     args = parser.parse_args()
 
@@ -382,7 +397,7 @@ if __name__ == '__main__':
         cfg = yaml.safe_load(f)
     cfg = SimpleNamespace(**cfg)
 
-    generate_embeddings(data_path=cfg.data_path, model_name=cfg.model, data_split=cfg.split, feature_path=cfg.feature_path)
+    generate_embeddings(data_path=cfg.data_path, model_name=cfg.feature_model, data_split=cfg.split, feature_path=cfg.feature_path, model_variant=cfg.feature_model_name)
 
 
 

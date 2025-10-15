@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 import torchvision.transforms as T
-from image_dataset import ImageDataset
+from dataset.image_dataset import ImageDataset
 from matplotlib import style
 
 style.use("seaborn-v0_8-whitegrid")

@@ -149,10 +149,7 @@ data/
 **/private.taml
 **/private.yaml
 
-#  internal scripts
-scripts/baselines/segmentation/eval.py
-scripts/baselines/few_shot/analyze.py
-
-# output directories
+# output and ckpt directories
 **/out/
+**/ckpts/
 

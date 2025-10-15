@@ -91,7 +91,7 @@ class FungiTastic(ImageDataset):
         self.data_subset = data_subset
         self.split = split
         self.task = task
-        self.img_root = root
+        self.img_root = os.path.join(root, 'images')
 
         assert "category_id" in df
         category_id2label = df.groupby("category_id")["species"].unique().to_dict()

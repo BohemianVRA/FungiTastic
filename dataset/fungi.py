@@ -82,7 +82,7 @@ class FungiTastic(ImageDataset):
         **kwargs,
     ):
         df = self.get_df(
-            data_path=root, split=split, size=size, task=task, data_subset=data_subset
+            data_path=os.path.join(root, 'images'), split=split, size=size, task=task, data_subset=data_subset
         )
 
         assert "image_path" in df

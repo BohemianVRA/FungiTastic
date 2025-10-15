@@ -318,29 +318,9 @@ if __name__ == "__main__":
         - Valid tasks: closed (always), open (sometimes for val/test)
     """
 
-    valid_combinations = FungiTastic.get_valid_meta_combinations()
-    for combo in valid_combinations:
-        try:
-            dataset = FungiTastic(
-                root="/Users/panda/Downloads",
-                split=combo["split"],
-                task=combo["task"],
-                data_subset=combo["data_subset"],
-                transform=None,
-            )
-            print(
-                f"Initialized dataset for {combo['data_subset']} {combo['split']} {combo['task']}"
-            )
-        except Exception as e:
-            print(
-                f"Failed to initialize dataset for {combo['data_subset']} {combo['split']} {combo['task']}: {e}"
-            )
-
-    # print the number of valid combinations
-    print(f"Number of valid combinations: {len(valid_combinations)}")
-    # number of .csv files in the metadata folder and any subfolders
-    csv_filenames = glob.glob(
-        os.path.join("/Users/panda/Downloads", "metadata", "**", "*.csv"),
-        recursive=True,
-    )
-    print(f"Number of .csv files: {len(csv_filenames)}")
+    dataset = FungiTastic(
+            root="/path/to/dataset",
+            split='val',
+            task='closed',
+            data_subset='Mini',
+        )

@@ -1,0 +1,11 @@
+num_workers: 4
+split: 'test'
+
+random_seed: 777
+root_path: "../../../"
+path_out: "../../../out/"
+debug: False
+
+data_path: '/path/to/FungiTastic'
+mask_path: '/path/to/save/masks'
+ckpt_path: '/path/to/model/checkpoints'  # models will be downloaded to this path

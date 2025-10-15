@@ -129,7 +129,7 @@ def visualize_binary_mask(image, mask, class_name: str) -> None:
         colors=["red"]
     )
     
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 8))
     axes[0].imshow(image)
     axes[0].set_title(f"Image - {class_name}")
     axes[0].axis('off')

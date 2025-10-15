@@ -187,7 +187,7 @@ def visualize_semantic_masks(image, masks: Dict[str, np.ndarray],
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
             # Draw contour with cyan color (BGR format)
-            cv2.drawContours(semantic_overlay, [contour], -1, (255, 0, 255), 2)
+            cv2.drawContours(semantic_overlay, [contour], -1, (255, 0, 255), 1)
     
     # Show overlay with transparency
     axes[1].imshow(image)
@@ -251,7 +251,7 @@ def visualize_instance_masks(image, masks: List[Tuple[np.ndarray, str]],
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
             # Draw contour with cyan color (BGR format)
-            cv2.drawContours(instance_overlay, [contour], -1, (255, 0, 255), 2)
+            cv2.drawContours(instance_overlay, [contour], -1, (255, 0, 255), 1)
     
     # Show overlay with transparency
     axes[1].imshow(image)
@@ -364,7 +364,7 @@ def create_semantic_overlay(masks: Dict[str, np.ndarray], image_shape: Optional[
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
             # Draw contour with cyan color (BGR format)
-            cv2.drawContours(overlay, [contour], -1, color=(255, 0, 255), thickness=2)
+            cv2.drawContours(overlay, [contour], -1, color=(255, 0, 255), thickness=1)
     
     return overlay
 
@@ -393,6 +393,6 @@ def create_instance_overlay(masks: List[Tuple[np.ndarray, str]], image_shape: Op
         contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
             # Draw contour with cyan color (BGR format)
-            cv2.drawContours(overlay, [contour], -1, (255, 0, 255), 2)
+            cv2.drawContours(overlay, [contour], -1, (255, 0, 255), 1)
     
     return overlay 

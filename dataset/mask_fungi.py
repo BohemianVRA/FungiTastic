@@ -325,7 +325,7 @@ if __name__ == '__main__':
 
 
     # Configuration parameters
-    config_path = os.path.join(SCRIPT_DIR, '../baselines/segmentation/config/seg.yaml')
+    config_path = os.path.join(SCRIPT_DIR, '../baselines/segmentation/config/default.yaml')
     split = 'val'  # 'val' or 'train'
     seg_task = 'instance'  # 'binary', 'semantic', or 'instance'
     debug = False  # Enable debug visualization of mask parts

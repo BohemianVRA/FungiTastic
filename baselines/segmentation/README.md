@@ -36,7 +36,7 @@ pip install -r requirements.txt
 
 ## 📝 Configuration
 
-Before running the mask generation script, you need to configure the paths in the config file. Create a copy of `config/seg.yaml` and update the following paths:
+Before running the mask generation script, you need to configure the paths in the config file. Create a copy of `config/default.yaml` and update the following paths:
 
 - `data_path`: Path to your FungiTastic dataset
 - `mask_path`: Path where generated masks will be saved

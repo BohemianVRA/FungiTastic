@@ -112,9 +112,10 @@ def evaluate_saved_masks(
         plt.savefig(result_dir / f'iou_hist_thresh{int(thresh * 100)}.png')
     plt.show()
 
+
 def main():
     parser = argparse.ArgumentParser(description='Evaluation')
-    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, 'config/seg.yaml'),  
+    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, './config/default.yaml'),
                         help='Path to the config file',)
     args = parser.parse_args()
 

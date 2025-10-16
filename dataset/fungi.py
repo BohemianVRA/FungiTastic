@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 import torchvision.transforms as T
-from fgvc.datasets import ImageDataset
+from dataset.image_dataset import ImageDataset
 from matplotlib import style
 
 style.use("seaborn-v0_8-whitegrid")
@@ -82,7 +82,7 @@ class FungiTastic(ImageDataset):
         **kwargs,
     ):
         df = self.get_df(
-            data_path=root, split=split, size=size, task=task, data_subset=data_subset
+            root_path=root, split=split, size=size, task=task, data_subset=data_subset
         )
 
         assert "image_path" in df
@@ -91,7 +91,7 @@ class FungiTastic(ImageDataset):
         self.data_subset = data_subset
         self.split = split
         self.task = task
-        self.img_root = root
+        self.img_root = os.path.join(root, 'images')
 
         assert "category_id" in df
         category_id2label = df.groupby("category_id")["species"].unique().to_dict()
@@ -191,7 +191,7 @@ class FungiTastic(ImageDataset):
 
     @staticmethod
     def get_df(
-        data_path: str,
+        root_path: str,
         split: str = "val",
         task: str = "closed",
         size: str = "300",
@@ -201,7 +201,7 @@ class FungiTastic(ImageDataset):
         Get the dataframe for the specified dataset parameters.
 
         Args:
-            data_path (str): Path to the dataset.
+            root_path (str): Path to the dataset.
             split (str): Data split.
             task (str): Task type.
             size (str): Image size.
@@ -221,14 +221,14 @@ class FungiTastic(ImageDataset):
         task_str = f"-{FungiTastic.TASK2STR[task]}" if len(tasks_for_split) > 1 else ""
 
         df_path = os.path.join(
-            data_path,
+            root_path,
             "metadata",
             subfolder_str,
             f"FungiTastic{data_subset_str}{task_str}-{FungiTastic.SPLIT2STR[split]}.csv",
         )
         df = pd.read_csv(df_path)
         df["image_path"] = df.filename.apply(
-            lambda x: os.path.join(data_path, subfolder_str, split, f"{size}p", x)
+            lambda x: os.path.join(root_path, "images", subfolder_str, split, f"{size}p", x)
         )
         return df
 

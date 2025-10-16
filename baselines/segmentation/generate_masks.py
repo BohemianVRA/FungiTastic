@@ -145,7 +145,7 @@ def main(cfg):
 if __name__ == '__main__':
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Generate masks for fungi dataset')
-    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, 'config/seg.yaml'))
+    parser.add_argument('--config_path', type=str, default=os.path.join(SCRIPT_DIR, './config/default.yaml'))
     args = parser.parse_args()
 
     # Load configuration from YAML file

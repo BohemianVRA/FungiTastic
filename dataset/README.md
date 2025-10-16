@@ -133,7 +133,7 @@ dataset_semantic.show_sample(0)
 
 ### Demo Notebooks
 
-#### `demo.ipynb`
+#### [Basic Data How To](https://github.com/BohemianVRA/FungiTastic/blob/main/dataset/demo.ipynb)
 
 Demonstration notebook covering:
 - Basic dataset loading and exploration
@@ -141,7 +141,7 @@ Demonstration notebook covering:
 - Metadata analysis and visualization
 - Dataset statistics and class distribution
 
-#### `mask_demo.ipynb`
+#### [FungiTastic Segmentation - Mask Loading](https://www.kaggle.com/code/picekl/fungitastic-segmentation-mask-loading)
 
 Specialized notebook for segmentation tasks demonstrating:
 - Loading and visualizing different segmentation task types

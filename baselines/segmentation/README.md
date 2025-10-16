@@ -3,7 +3,7 @@
 ## 🎯 Zero-shot segmentation
 
 We provide a zero-shot segmentation approach based on GroundingDINO and the Segment Anything Model (SAM). 
-
+Before you start, you can check our [dataloading and processing tutorial notebook on Kaggle](https://www.kaggle.com/code/picekl/fungitastic-segmentation-mask-loading).
 ## 🔬 Technical Details
 
 The segmentation pipeline uses a two-stage approach:
@@ -36,7 +36,7 @@ pip install -r requirements.txt
 
 ## 📝 Configuration
 
-Before running the mask generation script, you need to configure the paths in the config file. Create a copy of `config/seg.yaml` and update the following paths:
+Before running the mask generation script, you need to configure the paths in the config file. Create a copy of `config/default.yaml` and update the following paths:
 
 - `data_path`: Path to your FungiTastic dataset
 - `mask_path`: Path where generated masks will be saved
@@ -54,7 +54,7 @@ ckpt_path: '/path/to/model/checkpoints'
 To generate masks for your dataset, run:
 
 ```bash
-python generate_masks.py --config_path path/to/your/config.yaml
+python generate_masks.py --config_path ./config/default.yaml
 ```
 
 The script will:
@@ -68,7 +68,7 @@ The script will:
 You can visualize the generated masks using the provided Jupyter notebook:
 
 ```bash
-jupyter lab demo.ipynb
+jupyter lab visualize_predictions.ipynb
 ```
 
 The demo notebook shows:

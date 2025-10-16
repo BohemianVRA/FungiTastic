@@ -162,24 +162,24 @@ class FungiTasticDownloader:
         )
         for split in splits:
             img_link = self.generate_img_link(subset=subset, size=size, split=split)
-            self.download_and_extract(img_link, self.fungi_path)
+            self.download_and_extract(img_link, self.fungi_path / "images")
 
     def download_satellite_data(self) -> None:
         """Downloads and extracts satellite data (NIR and RGB)."""
         satellite_files = ["satellite_NIR.zip", "satellite_RGB.zip"]
         for file in satellite_files:
             satellite_link = f"{self.DOWNLOAD_ROOT}/{file}"
-            self.download_and_extract(satellite_link, self.fungi_path)
+            self.download_and_extract(satellite_link, self.fungi_path / "satelliteImages")
 
     def download_climatic_data(self) -> None:
         """Downloads and extracts climatic data."""
         climatic_url = f"{self.DOWNLOAD_ROOT}/climatic.zip"
-        self.download_and_extract(climatic_url, self.fungi_path)
+        self.download_and_extract(climatic_url, self.fungi_path / "climaticData")
 
     def download_masks(self) -> None:
         """Downloads and extracts mask data."""
         masks_url = f"{self.DOWNLOAD_ROOT}/masks.zip"
-        self.download_and_extract(masks_url, self.fungi_path)
+        self.download_and_extract(masks_url, self.fungi_path / "masks")
 
     def generate_img_link(self, subset: str, size: str, split: str) -> str:
         """

@@ -139,7 +139,6 @@ wandb/
 metadata/
 experiments/
 logs/
-data/
 # Mac filesystem
 .DS_Store
 
@@ -155,3 +154,4 @@ scripts/baselines/few_shot/analyze.py
 
 # output directories
 **/out/
+/data/

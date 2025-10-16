@@ -1,7 +1,10 @@
+![FungiTastic Example](assets/observation.png)
+
+
 FungiTastic is a **realistic ML benchmark**: beyond images, each observation aligns **visual and contextual predictors** (metadata, captions, satellite, climate etc.). This design addresses gaps in image-only FGVC/few-shot benchmarks by enabling **fusion models**, **temporal robustness** checks, and **part-aware** evaluation on the *same specimens*.
 
-### Modalities at a glance and why they matter
-Unlike classic FGVC datasets that assume an image is enough, FungiTastic provides context that often *decides* the label:
+### Modalities at a glance
+Unlike standard and fine-grained categorization datasets that assume an image is enough, FungiTastic provides context that often *decides* the label:
 
 - 🖼️ **Photographs** (+ 📝 **captions**): standard image-based data accompanied by captions (MOLMO-7b-generated) to support **vision-language** classification and retrieval.
 - 🧾 **Metadata & hierarchical labels**: date, location, habitat, substrate, toxicity, hierarchy — essential for **separation look-alikes** and studying **cost-sensitive** errors.
@@ -11,7 +14,7 @@ Unlike classic FGVC datasets that assume an image is enough, FungiTastic provide
 
 > For bigger detail, see  [Metadata](data/metadata.md) • [Captions](data/captions.md) • [Satellite](data/satellite.md) • [Climate](data/climate.md) • [Masks](data/masks.md)
 
-### FungiTastic subsets; built for different research goals
+### FungiTastic subsets
 FungiTastic ships predefined subsets so you can balance **scale, rarity, and annotation depth** (a limitation in many prior benchmarks that offer only one).
 
 | Subset                  | Observ. | Images | Species | Why it exists / Primary use |
@@ -22,7 +25,7 @@ FungiTastic ships predefined subsets so you can balance **scale, rarity, and ann
 
 > Coverage note: metadata, captions, climate, and satellite are available for virtually all observations; **masks** are provided in **Mini**.
 
-### Split protocol — why chronological (vs. static random splits)
+### Split protocol
 To measure **generalization over time and space** (seasonality, community drift, sensors, regions), we split by observation year rather than random sampling (typical of many FGVC/few-shot sets):
 
 - **Train:** ≤ 2021  
@@ -34,7 +37,7 @@ Task specifics, aligned to ML practice:
 - **Open-set:** train on seen species; val/test include **held-out species** labeled *unknown* → evaluates **novelty/unknown detection**.  
 - **Cost-sensitive:** errors weighted by risk (e.g., edible vs. poisonous) → reflects **application stakes**, not just accuracy.
 
-### How to choose — quick, practical guidance
+### How and what to choose
 These recommendations reflect FungiTastic’s design goals and where prior datasets fall short:
 
 - **Strong image baseline quickly** → start with **Mini** (fast, part masks), then scale to **Full** for robustness under shift.  

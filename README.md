@@ -22,7 +22,7 @@ venv\Scriptsctivate      # On Windows
 Now install MkDocs and the Material theme:
 
 ```bash
-pip install mkdocs-material pymdown-extensions
+pip install -r ./docs/requirements.txt
 ```
 
 ---

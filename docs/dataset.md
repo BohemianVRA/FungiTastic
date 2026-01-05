@@ -1,92 +1,48 @@
-# 🗃️ FungiTastic Dataset
+![FungiTastic Example](assets/observation.png)
 
-FungiTastic is a large-scale, **multi-modal benchmark dataset** for computer vision, machine learning, and biodiversity research, centered around wild fungi observations. It offers expert-labeled data across more than 5,000 species, collected over 20+ years, and is designed to power research in fine-grained recognition, domain adaptation, multi-modal learning, open-set recognition, and more.
 
----
+FungiTastic is a **realistic ML benchmark**: beyond images, each observation aligns **visual and contextual predictors** (metadata, captions, satellite, climate etc.). This design addresses gaps in image-only FGVC/few-shot benchmarks by enabling **fusion models**, **temporal robustness** checks, and **part-aware** evaluation on the *same specimens*.
 
-## 🚀 What’s Inside?
+### Modalities at a glance
+Unlike standard and fine-grained categorization datasets that assume an image is enough, FungiTastic provides context that often *decides* the label:
 
-- **Size:** ~350,000 observations, >600,000 images, ~5,000 species.
-- **Modalities:** Photographs, satellite data, climate time series, segmentation masks, expert taxon labels, rich metadata, and image captions.
-- **Expert Curation:** Species labels are expert-verified; a subset includes DNA-sequenced ground truth.
-- **Region:** Predominantly Denmark and Northern Europe.
-- **Time span:** 2003–2023.
+- 🖼️ **Photographs** (+ 📝 **captions**): standard image-based data accompanied by captions (MOLMO-7b-generated) to support **vision-language** classification and retrieval.
+- 🧾 **Metadata & hierarchical labels**: date, location, habitat, substrate, toxicity, hierarchy — essential for **separation look-alikes** and studying **cost-sensitive** errors.
+- 🛰️ **Remote sensing context** (4 band, 64×64 @10m resolution): local environment around the site; enables **geospatial priors** unavailable in image-only benchmarks.
+- 🌦️ **Climate time series** (20y temps/precip + 19 bioclims): long-term signals for **temporal shift** and **distribution modeling** beyond static splits.
+- ✂️ **Segmentation masks** (Mini only): Annotation masks of 5 body parts, i.e., caps/gills/stems/pores/rings; allowing **part-aware models** and **explainability**, rarely available in FGVC suites.
 
----
+> For bigger detail, see  [Metadata](data/metadata.md) • [Captions](data/captions.md) • [Satellite](data/satellite.md) • [Climate](data/climate.md) • [Masks](data/masks.md)
 
-## 🧑‍🔬 What Can You Use It For?
+### FungiTastic subsets
+FungiTastic ships predefined subsets so you can balance **scale, rarity, and annotation depth** (a limitation in many prior benchmarks that offer only one).
 
-FungiTastic is specifically designed to benchmark and develop advanced ML models for:
+| Subset                  | Observ. | Images | Species | Why it exists / Primary use |
+|-------------------------|--------:|-------:|---:|---|
+| **FungiTastic**         |   ≈350k |  ≈630k | 4 507 | **Comprehensive** closed/open-set classification, **multimodal fusion**, and **chronological shift** on one dataset (incl. a DNA-verified test slice). |
+| **FungiTastic Mini**    |  36 287 | 67 848 | 253  | **Fast iteration** with **part masks** (~70k) for segmentation and **part-aware** fine-grained recognition; smaller but **richer labels** than typical FGVC sets. |
+| **FungiTastic FewShot** |   6 391 | 12 015 | 2 427  | **True long-tail few-shot**: species selected by **<5 train images**, preserving natural imbalance—unlike episodic, class-balanced few-shot suites. |
 
-- **Fine-grained image classification** (closed-set, open-set)
-- **Few-shot learning** and rare species recognition
-- **Multi-modal and multi-task learning** (combine visual, tabular, geospatial, and textual data)
-- **Domain adaptation and temporal shift** (study seasonal, habitat, and year-to-year distribution changes)
-- **Vision-language modeling** (with detailed image captions)
-- **Semantic and instance segmentation**
-- **Cost-sensitive classification** (e.g., recognizing poisonous vs. edible species)
+> Coverage note: metadata, captions, climate, and satellite are available for virtually all observations; **masks** are provided in **Mini**.
 
-> **See the [Benchmarks](../benchmarks/closed.md) section for a deep dive on supported challenges.**
+### Split protocol
+To measure **generalization over time and space** (seasonality, community drift, sensors, regions), we split by observation year rather than random sampling (typical of many FGVC/few-shot sets):
 
----
+- **Train:** ≤ 2021  
+- **Validation:** 2022  
+- **Test:** 2023  
 
-## 📚 Dataset Subsets
+Task specifics, aligned to ML practice:
+- **Few-shot (FS):** species go to FS if **training images < 5**; val/test remain chronological → tests **rare-class learning** without synthetic balancing.  
+- **Open-set:** train on seen species; val/test include **held-out species** labeled *unknown* → evaluates **novelty/unknown detection**.  
+- **Cost-sensitive:** errors weighted by risk (e.g., edible vs. poisonous) → reflects **application stakes**, not just accuracy.
 
-FungiTastic is split into several subsets, each tailored for different research tasks:
+### How and what to choose
+These recommendations reflect FungiTastic’s design goals and where prior datasets fall short:
 
-### 1. **FungiTastic (Full)**
-- The main benchmark set: >346k observations, >4,500 species, with all modalities.
-- **Use:** Closed-set & open-set classification, multi-modal modeling.
+- **Strong image baseline quickly** → start with **Mini** (fast, part masks), then scale to **Full** for robustness under shift.  
+- **Rare-class / few-shot methods** → use **FS** (naturally long-tailed) and report few-shot metrics.  
+- **Multimodal fusion** (image + context) → **Full** with metadata + satellite + climate (image-only sets cannot test this).  
+- **Explainability / parts** → train segmentation on **Mini** and connect parts to downstream classifiers.
 
-### 2. **FungiTastic-Mini (FungiTastic–M)**
-- A compact subset from 6 challenging genera (e.g., Russula, Amanita, Boletus).
-- Includes **body part segmentation masks** for ~70k images.
-- **Use:** Fast prototyping, segmentation, few-shot, open-set.
-
-### 3. **FungiTastic–FS (Few-shot)**
-- Observations from species with <5 training samples.
-- **Use:** Few-shot learning & rare species recognition.
-
-> Details and statistics for each subset are provided in the [Subsets](#fungitastic-dataset-subsets) and [Benchmarks](../benchmarks/closed.md) pages.
-
----
-
-## 🔗 Available Data Modalities
-
-Each observation can include a combination of:
-
-- **[Photographs & Captions](./photographs.md):** High-quality images (incl. some spore micrographs) and automatic detailed text descriptions.
-- **[Taxonomic Labels](./metadata.md):** Full biological hierarchy and toxicity (edible/poisonous).
-- **[Body Part Segmentation Masks](./masks.md):** For toadstool-type fungi in the Mini subset.
-- **[Tabular Metadata](./metadata.md):** Date, location, habitat, substrate, elevation, land cover, etc.
-- **[Remote Sensing Data](./satellite.md):** 64x64 multi-band satellite images at 10m spatial resolution.
-- **[Climate Time Series](./climate.md):** 20 years of temperature/precipitation data and bioclimatic variables.
-
----
-
-## 🗂️ Quick Links to Data Sections
-
-| Data Type              | Description                               | Link                                  |
-|------------------------|-------------------------------------------|---------------------------------------|
-| Photographs & Captions | Images and generated text descriptions    | [Photographs & Captions](./photographs.md) |
-| Taxonomic Metadata     | Labels, toxicity, environment info        | [Metadata](./metadata.md)             |
-| Segmentation Masks     | Body part annotations (Mini subset)       | [Segmentation Masks](./masks.md)      |
-| Satellite Data         | Local satellite/environmental context     | [Satellite Data](./satellite.md)      |
-| Climate Series         | Long-term climate for each location       | [Climate Time Series](./climate.md)   |
-
----
-
-## 📥 How to Download
-
-Instructions for access and download are provided in the [Dataset Download Guide](../usage/download.md).
-
----
-
-## 📝 Citations & Further Reading
-
-For detailed methodology, statistics, and baselines, see our [paper](https://arxiv.org/pdf/2408.13632) and the [Citation](../citation.md) page.
-
----
-
-> Still have questions? Explore the [FAQ](../index.md) or reach out via [GitHub Issues](https://github.com/bohemianvra/FungiTastic/issues).
-
+> Next: see **[Benchmarks](../benchmarks.md)** for task definitions and metrics, and **[Download Guide](../usage/download.md)** to grab subsets and scripts.

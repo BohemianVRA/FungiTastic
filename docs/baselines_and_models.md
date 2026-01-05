@@ -3,9 +3,10 @@
 FungiTastic includes **strong, diverse baselines** for all benchmark tasks.  
 You’ll find:
 
-- Ready-to-use pre-trained weights and scripts
-- Classic CNNs, modern transformers, and multimodal models
-- Results on all main benchmarks
+- Ready-to-use models with pre-trained weights: classic CNNs, modern transformers, and multimodal models.
+- Results on all main benchmarks.
+- Evaluation scripts to reproduce the results.
+- Demo notebooks with example usage.
 
 ---
 
@@ -13,10 +14,10 @@ You’ll find:
 
 | Task                    | Model Page                        | Baseline Types           |
 |-------------------------|-----------------------------------|--------------------------|
-| Closed-set Classification | [Closed-set Models](closed.md)   | CNN, ViT, BEiT, etc.     |
-| Few-shot Learning         | [Few-shot Models](few_shot.md)   | ProtoNet, NN, CLIP, etc. |
-| Open-set Classification   | [Open-set Models](open.md)       | Softmax, logit, DINOv2   |
-| Vision-Language Fusion    | [VLM Fusion](vlm.md)             | DistilBERT, Fusion       |
+| Closed-set Classification | [Closed-set Models](closed)   | CNN, ViT, BEiT, etc.     |
+| Few-shot Learning         | [Few-shot Models](few_shot)   | CE, prototypes, NN       |
+| Open-set Classification   | [Open-set Models](open)       | Softmax, logit, DINOv2   |
+| Vision-Language Fusion    | [VLM Fusion](vlm)             | DistilBERT, Fusion       |
 
 Segmentation models are covered in the [Segmentation Baselines](segmentation.md).
 

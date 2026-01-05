@@ -5,18 +5,9 @@ repo_name: FungiTastic
 theme:
   name: material
   palette:
-    - scheme: slate
-      primary: brown
-      accent: lime
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
-    - scheme: default
-      primary: brown
-      accent: lime
-      toggle:
-        icon: material/weather-night
-        name: Switch to dark mode
+    scheme: slate
+    primary: brown
+    accent: lime
 
 markdown_extensions:
   - pymdownx.details
@@ -26,15 +17,22 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
+plugins:
+  - search
+  - redirects
+
+extra_javascript:
+  - javascripts/nav-click.js
+
 nav:
   - Introduction: index.md
-  - Datasets:
-      - Overview: dataset.md
+  - Dataset Overview:
+      - Available Data, Subsets & Splits: dataset.md
       - Metadata: data/metadata.md
-      - Satellite Data: data/satellite.md
-      - Climate Time Series: data/climate.md
-      - Image Captions: data/captions.md
+      - Captions: data/captions.md
+      - Satellite Images: data/satellite.md
       - Segmentation Masks: data/masks.md
+      - Climate Time Series: data/climate.md
   - Benchmarks:
       - Overview: benchmarks.md
       - FungiCLEF 2025: benchmarks/FungiCLEF2025.md
@@ -44,14 +42,13 @@ nav:
       - Chronological Shift: benchmarks/chronological.md
       - Cost-sensitive Classification: benchmarks/cost_sensitive.md
       - Segmentation Task: benchmarks/segmentation.md
-  - Baselines & Models:
+  - Baselines & Tutorials:
       - Overview: baselines_and_models.md
-      - Closed-set Models: models/closed.md
-      - Few-shot Models: models/few_shot.md
-      - Open-set Models: models/open.md
-      - VLM Fusion: models/vlm.md
-  - How to Use:
-      - Downloading the Dataset: usage/download.md
       - Training Your Model: usage/training.md
-      - Evaluation Protocols: usage/evaluation.md
+      # - Evaluation Protocols: usage/evaluation.md Separately in each Benchmark
+      - Closed-set Models: baselines_and_models/closed.md
+      - Few-shot Models: baselines_and_models/few_shot.md
+      - Open-set Models: baselines_and_models/open.md
+      - VLM Fusion: baselines_and_models/vlm.md
+  - Download: download.md
   - Citation & Acknowledgements: citation.md

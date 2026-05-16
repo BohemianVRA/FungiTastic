@@ -23,8 +23,13 @@
 
 ## Code & Usage
 
-- Open-set detection scripts: [`examples/openset_classification.py`](https://github.com/bohemianvra/FungiTastic/)
-- Data splits: [Kaggle](https://www.kaggle.com/datasets/picekl/fungitastic)
+
+Results can be reproduced using the code in `baselines/open_set/`:
+
+1. `extract_features.ipynb` : extracts features for downstream tasks. The notebook loads both DINOv2 and the Hugging Face BEiT checkpoint fine-tuned on FungiTastic (`hf-hub:BVRA/beit_base_patch16_384.in1k_ft_fungitastic_384` via `timm`) and saves train/val/test features and logits.
+2. `dino_linear.ipynb`: trains a simple linear classifier on frozen DINOv2 features so that MSP and MLS can be computed from logits comparable to the closed-set setup.
+3. `ood.ipynb`: builds known-vs.-novel score distributions and computes evaluation metrics. Uses helper functions from `ood_utils.py`.
+
 
 ---
 

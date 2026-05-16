@@ -21,9 +21,11 @@
 
 ## Code & Usage
 
-- Caption generation and fusion code: [`examples/vlm_fusion.py`](https://github.com/bohemianvra/FungiTastic/)
-- Pre-computed captions included in the dataset
+Results can be reproduced using the code in `baselines/vlm_fusion/`:
 
+1. `distilbert.ipynb`: fine-tune DistilBERT on captions and export test logits to `results/bert_logits_{mini,full}_test.pth`.
+2. `extract_logits.ipynb`: extract BEiT test logits with `hf-hub:BVRA/beit_base_patch16_224.in1k_ft_fungitastic_224` (via `timm`); saves under `features/beit-224-{mini,full}/`.
+3. `fusion.ipynb`: mean-logit fusion and Top-1 / Top-3 / macro-F1 on the test split. Use `variant = "mini"` for FungiTastic-M and `variant = "full"` for the full benchmark.
 ---
 
 ## Related
